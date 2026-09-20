@@ -5,7 +5,6 @@
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
 *.pyo
 *.pyd
 .venv/
@@ -16,24 +15,15 @@ ENV/
 .installed.cfg
 *.egg
 
-# Secrets and Local Environment Configuration
-.env
-*.env
-.env.*
-!.env.example
-backend/.env
-backend/*.env
-!backend/.env.example
-
-# Jupyter Notebooks
+# Jupyter
 .ipynb_checkpoints/
 */.ipynb_checkpoints/*
 
-# Node.js / Frontend
+# Node
 node_modules/
 frontend/node_modules/
-frontend/dist/
 dist/
+frontend/dist/
 coverage/
 npm-debug.log*
 yarn-debug.log*
@@ -41,40 +31,51 @@ yarn-error.log*
 pnpm-debug.log*
 .eslintcache
 
-# Large ML Weights, Checkpoints & Processed Datasets (Retained Locally)
+# Environment / secrets
+.env
+*.env
+.env.*
+backend/.env
+backend/*.env
+!.env.example
+!backend/.env.example
+
+# Large ML artifacts
 ml/models/
 ml/processed/
 ml/.venv/
+
+# Datasets
 data/
 
-# Local Uploaded Document Storage & ChromaDB Runtime (Retained Locally)
-backend/storage/uploads/*
-!backend/storage/uploads/.gitkeep
-backend/storage/processed/*
-!backend/storage/processed/.gitkeep
-backend/storage/chroma/*
-!backend/storage/chroma/.gitkeep
+# Runtime uploaded documents
+backend/storage/uploads/
+backend/storage/processed/
+backend/storage/chroma/
 backend/storage/chroma_test/
 
-# Local Vendored Packages (Retained Locally for Standalone Windows Execution)
+# Python vendored packages / local binaries
 backend/packages/
 
-# Data Formats & Database Binaries
+# Large binary/data files
 *.npy
+*.npz
 *.parquet
 *.zip
 *.tar
 *.tar.gz
-*.sqlite3
 *.bin
+*.pt
+*.pth
+*.safetensors
+*.ckpt
+*.sqlite
+*.sqlite3
 
-# Logs & Temporary Files
+# Logs
 *.log
-scratch/
-tmp/
-temp/
 
-# Operating System & Editor Files
+# OS/editor
 .DS_Store
 Thumbs.db
 desktop.ini
@@ -82,3 +83,8 @@ desktop.ini
 .idea/
 *.sublime-project
 *.sublime-workspace
+
+# Scratch and Temporary directories
+scratch/
+tmp/
+temp/

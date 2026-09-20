@@ -1,0 +1,128 @@
+[
+  {
+    "question_id": "rag_01",
+    "question": "What is the total gross amount and amount due for invoice_0292?",
+    "category": "factual_extraction",
+    "target_doc_ids": ["invoice_0292"],
+    "expected_supporting_chunks": ["invoice_0292_0"],
+    "expected_answer": "The total gross amount for invoice_0292 is $325.00 and the net amount due is $276.25.",
+    "evaluation_mode": "token_f1_and_em"
+  },
+  {
+    "question_id": "rag_02",
+    "question": "Who is the buyer and client code in invoice_0292?",
+    "category": "factual_extraction",
+    "target_doc_ids": ["invoice_0292"],
+    "expected_supporting_chunks": ["invoice_0292_0"],
+    "expected_answer": "The buyer is Eagle Radio of Great Bend and the agency client code is ISCI.",
+    "evaluation_mode": "token_f1"
+  },
+  {
+    "question_id": "rag_03",
+    "question": "Explain the early termination fee provisions in contract_0086.",
+    "category": "explanation",
+    "target_doc_ids": ["contract_0086"],
+    "expected_supporting_chunks": ["contract_0086_16"],
+    "expected_answer": "Under Clause 16.5 of contract_0086, the Company may terminate the Agreement for convenience by Notice of termination, following which the Repairer shall invoice an early termination fee.",
+    "evaluation_mode": "grounded_rubric"
+  },
+  {
+    "question_id": "rag_04",
+    "question": "What constitutes a Termination Event under contract_0154?",
+    "category": "definition",
+    "target_doc_ids": ["contract_0154"],
+    "expected_supporting_chunks": ["contract_0154_6"],
+    "expected_answer": "Under contract_0154, a Termination Event occurs if a party materially breaches obligations uncured for 30 calendar days, becomes insolvent or enters bankruptcy/receivership, merges or transfers 50% or more voting securities, or violates financial services regulations.",
+    "evaluation_mode": "grounded_rubric"
+  },
+  {
+    "question_id": "rag_05",
+    "question": "How are liquidated damages calculated if contract_0229 terminates before the opening date but after hotel work begins?",
+    "category": "calculation",
+    "target_doc_ids": ["contract_0229"],
+    "expected_supporting_chunks": ["contract_0229_20"],
+    "expected_answer": "If termination occurs after beginning Hotel Work but before the Opening Date, liquidated damages are equal to $3,600 multiplied by the number of approved Guest Rooms at the Hotel, unless due to Force Majeure.",
+    "evaluation_mode": "token_f1"
+  },
+  {
+    "question_id": "rag_06",
+    "question": "In invoice_0292, how many broadcast spots were billed at $25 each?",
+    "category": "calculation",
+    "target_doc_ids": ["invoice_0292"],
+    "expected_supporting_chunks": ["invoice_0292_0"],
+    "expected_answer": "In invoice_0292, there are 13 spots billed at $25 each, totaling $325.00 gross.",
+    "evaluation_mode": "token_f1"
+  },
+  {
+    "question_id": "rag_07",
+    "question": "In contract_0112, which party is the licensor and which is the licensee, and what happens to revenue sharing upon termination?",
+    "category": "multi_hop",
+    "target_doc_ids": ["contract_0112"],
+    "expected_supporting_chunks": ["contract_0112_2"],
+    "expected_answer": "PACIFICAP ENTERTAINMENT INC. is the Licensor and THE HENRY FILM AND ENTERTAINMENT CORPORATION is the Licensee. All revenue sharing ceases with the termination of the Agreement.",
+    "evaluation_mode": "grounded_rubric"
+  },
+  {
+    "question_id": "rag_08",
+    "question": "List the key warranties CRO provides to Client in contract_0356.",
+    "category": "enumeration",
+    "target_doc_ids": ["contract_0356"],
+    "expected_supporting_chunks": ["contract_0356_1"],
+    "expected_answer": "CRO warrants that Services will be performed in a professional and workmanlike manner on a best endeavours basis according to standard of care, and that work performed will be correct in all material respects.",
+    "evaluation_mode": "grounded_rubric"
+  },
+  {
+    "question_id": "rag_09",
+    "question": "What remedies are available upon default under contract_0086?",
+    "category": "enumeration",
+    "target_doc_ids": ["contract_0086"],
+    "expected_supporting_chunks": ["contract_0086_16"],
+    "expected_answer": "Remedies include court action following arbitration to enforce performance, recover damages, repossess Items, and seek reimbursement of expenses and losses.",
+    "evaluation_mode": "grounded_rubric"
+  },
+  {
+    "question_id": "rag_10",
+    "question": "Who is the vendor listed in purchase order po_0000?",
+    "category": "factual_extraction",
+    "target_doc_ids": ["po_0000"],
+    "expected_supporting_chunks": ["po_0000_0"],
+    "expected_answer": "The vendor listed in purchase order po_0000 is KGAB.",
+    "evaluation_mode": "token_f1_and_em"
+  },
+  {
+    "question_id": "rag_11",
+    "question": "What is the contact phone number for the requisitioner in po_0002?",
+    "category": "factual_extraction",
+    "target_doc_ids": ["po_0002"],
+    "expected_supporting_chunks": ["po_0002_0"],
+    "expected_answer": "The requisitioner phone number in po_0002 is 804-274-5214.",
+    "evaluation_mode": "token_f1_and_em"
+  },
+  {
+    "question_id": "rag_12",
+    "question": "Why does contract_0356 limit liability to the sum of amounts received, and what exceptions exist?",
+    "category": "explanation",
+    "target_doc_ids": ["contract_0356"],
+    "expected_supporting_chunks": ["contract_0356_1"],
+    "expected_answer": "Total liability in respect of damages is limited to amounts received from Client, with exceptions for claims arising from inventions and proprietary information, indemnification obligations, gross negligence, or willful misconduct.",
+    "evaluation_mode": "grounded_rubric"
+  },
+  {
+    "question_id": "rag_13",
+    "question": "Compare the notice period required for material breach before termination in contract_0112 versus contract_0154.",
+    "category": "document_comparison",
+    "target_doc_ids": ["contract_0112", "contract_0154"],
+    "expected_supporting_chunks": ["contract_0112_2", "contract_0154_6"],
+    "expected_answer": "Both contract_0112 and contract_0154 provide a thirty (30) day written notice cure period for a material breach before termination can take effect.",
+    "evaluation_mode": "grounded_rubric"
+  },
+  {
+    "question_id": "rag_14",
+    "question": "How is Confidential Information defined and protected in contract_0112?",
+    "category": "definition",
+    "target_doc_ids": ["contract_0112"],
+    "expected_supporting_chunks": ["contract_0112_2"],
+    "expected_answer": "Confidential Information relates to the party's business identified at disclosure. Both parties agree to preserve and protect confidentiality and not disclose without prior written consent, surviving termination.",
+    "evaluation_mode": "grounded_rubric"
+  }
+]

@@ -1,0 +1,319 @@
+{
+  "benchmark": "document_classification",
+  "dataset": {
+    "path": "ml/processed/test.csv",
+    "total_test_samples": 996,
+    "classes": [
+      "Contract",
+      "Email",
+      "Invoice",
+      "Purchase Order",
+      "Report"
+    ]
+  },
+  "checkpoint": {
+    "path": "C:\\Projects\\DocuMind\\ml\\models\\distilbert_doc_classifier\\final",
+    "device": "cuda",
+    "label_mapping": {
+      "0": "Contract",
+      "1": "Email",
+      "2": "Invoice",
+      "3": "Purchase Order",
+      "4": "Report"
+    }
+  },
+  "pipeline_settings": {
+    "primary": {
+      "description": "Production Agent Pipeline (Cleaned Text + Sliding-Window Chunking + Mean Logit Pooling)",
+      "preprocessing": "clean_model_text (HTML/Markdown image removal, page-split removal, whitespace normalization)",
+      "max_length": 512,
+      "stride": 128,
+      "pooling": "mean_chunk_logits",
+      "total_chunks_evaluated": 1537
+    },
+    "ablation": {
+      "description": "Na\u00efve Truncation Baseline (Uncleaned Raw Text + Single 512-Token Window)",
+      "preprocessing": "None (raw model_text)",
+      "max_length": 512,
+      "stride": null,
+      "pooling": "first_window_only"
+    }
+  },
+  "models": {
+    "distilbert": {
+      "name": "DistilBERT (distilbert-base-uncased)",
+      "checkpoint": "C:\\Projects\\DocuMind\\ml\\models\\distilbert_doc_classifier\\final",
+      "device": "cuda",
+      "metrics": {
+        "accuracy": 0.999,
+        "macro_precision": 0.9993,
+        "macro_recall": 0.9993,
+        "macro_f1": 0.9993,
+        "weighted_f1": 0.999,
+        "per_class": {
+          "Contract": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1_score": 1.0,
+            "support": 77
+          },
+          "Email": {
+            "precision": 1.0,
+            "recall": 0.9966666666666667,
+            "f1_score": 0.998330550918197,
+            "support": 300
+          },
+          "Invoice": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1_score": 1.0,
+            "support": 300
+          },
+          "Purchase Order": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1_score": 1.0,
+            "support": 19
+          },
+          "Report": {
+            "precision": 0.9966777408637874,
+            "recall": 1.0,
+            "f1_score": 0.9983361064891847,
+            "support": 300
+          }
+        },
+        "labels": [
+          "Contract",
+          "Email",
+          "Invoice",
+          "Purchase Order",
+          "Report"
+        ],
+        "confusion_matrix": [
+          [
+            77,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            299,
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            300,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            19,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            300
+          ]
+        ],
+        "total_samples": 996,
+        "inference_latency_ms_per_doc": 37.054
+      }
+    },
+    "baseline_tfidf_lr": {
+      "name": "TF-IDF + Logistic Regression",
+      "metrics": {
+        "accuracy": 0.997,
+        "macro_precision": 0.998,
+        "macro_recall": 0.9862,
+        "macro_f1": 0.992,
+        "weighted_f1": 0.997,
+        "per_class": {
+          "Contract": {
+            "precision": 1.0,
+            "recall": 0.987012987012987,
+            "f1_score": 0.9934640522875817,
+            "support": 77
+          },
+          "Email": {
+            "precision": 0.9966666666666667,
+            "recall": 0.9966666666666667,
+            "f1_score": 0.9966666666666667,
+            "support": 300
+          },
+          "Invoice": {
+            "precision": 0.9966777408637874,
+            "recall": 1.0,
+            "f1_score": 0.9983361064891847,
+            "support": 300
+          },
+          "Purchase Order": {
+            "precision": 1.0,
+            "recall": 0.9473684210526315,
+            "f1_score": 0.972972972972973,
+            "support": 19
+          },
+          "Report": {
+            "precision": 0.9966777408637874,
+            "recall": 1.0,
+            "f1_score": 0.9983361064891847,
+            "support": 300
+          }
+        },
+        "labels": [
+          "Contract",
+          "Email",
+          "Invoice",
+          "Purchase Order",
+          "Report"
+        ],
+        "confusion_matrix": [
+          [
+            76,
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            299,
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            300,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            18,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            300
+          ]
+        ],
+        "total_samples": 996,
+        "inference_latency_ms_per_doc": 0.005
+      }
+    }
+  },
+  "comparison": {
+    "accuracy_delta": 0.002,
+    "macro_f1_delta": 0.0073,
+    "weighted_f1_delta": 0.002
+  },
+  "ablations": {
+    "distilbert_naive_truncation_raw": {
+      "name": "DistilBERT (Na\u00efve Truncation, Uncleaned Raw Text)",
+      "description": "Evaluates raw model_text truncated at 512 tokens without preprocessing or chunk pooling",
+      "metrics": {
+        "accuracy": 0.988,
+        "macro_precision": 0.9922,
+        "macro_recall": 0.992,
+        "macro_f1": 0.992,
+        "weighted_f1": 0.9879,
+        "per_class": {
+          "Contract": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1_score": 1.0,
+            "support": 77
+          },
+          "Email": {
+            "precision": 0.964516129032258,
+            "recall": 0.9966666666666667,
+            "f1_score": 0.980327868852459,
+            "support": 300
+          },
+          "Invoice": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1_score": 1.0,
+            "support": 300
+          },
+          "Purchase Order": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1_score": 1.0,
+            "support": 19
+          },
+          "Report": {
+            "precision": 0.996551724137931,
+            "recall": 0.9633333333333334,
+            "f1_score": 0.9796610169491525,
+            "support": 300
+          }
+        },
+        "labels": [
+          "Contract",
+          "Email",
+          "Invoice",
+          "Purchase Order",
+          "Report"
+        ],
+        "confusion_matrix": [
+          [
+            77,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            299,
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            300,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            19,
+            0
+          ],
+          [
+            0,
+            11,
+            0,
+            0,
+            289
+          ]
+        ],
+        "total_samples": 996,
+        "inference_latency_ms_per_doc": 30.671
+      },
+      "notes": "Reproduces earlier 98.80% accuracy / 99.20% macro F1 result caused by uncleaned OCR header artifacts pushing report bodies beyond token 512"
+    }
+  }
+}

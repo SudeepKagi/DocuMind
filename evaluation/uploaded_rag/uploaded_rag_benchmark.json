@@ -1,0 +1,82 @@
+[
+  {
+    "id": "up_01",
+    "question": "What qualifications are required in the Northstar AI Software Engineering Internship JD?",
+    "file_type": "PDF",
+    "query_scope": "single_document",
+    "target_doc_ids": ["doc_94520dc7"],
+    "target_filename": "Northstar_AI_Software_Engineer_Internship_JD.pdf",
+    "expected_answer_keywords": ["python", "software", "intern", "machine learning", "platform"],
+    "expected_answer": "Requires strong foundations in Python, algorithms, data structures, and enthusiasm for AI/ML platform engineering."
+  },
+  {
+    "id": "up_02",
+    "question": "What security certifications and compliance frameworks are documented in CloudNet Security Assessment?",
+    "file_type": "DOCX",
+    "query_scope": "single_document",
+    "target_doc_ids": ["doc_21dec666"],
+    "target_filename": "CloudNet_Security_Assessment.docx",
+    "expected_answer_keywords": ["security", "compliance", "assessment", "cloudnet", "certifications"],
+    "expected_answer": "Documents enterprise security assessment, compliance frameworks, encryption standards, and certification controls."
+  },
+  {
+    "id": "up_03",
+    "question": "What is the total amount due, vendor, and payment terms in the server hardware PO-9981 email?",
+    "file_type": "EML",
+    "query_scope": "single_document",
+    "target_doc_ids": ["doc_4ca5a3b1"],
+    "target_filename": "invoice_po9981.eml",
+    "expected_answer_keywords": ["14,900", "Enterprise Compute Solutions", "Net 30", "Dell PowerEdge", "PO-9981"],
+    "expected_answer": "Total amount due is $14,900.00 USD, vendor is Enterprise Compute Solutions LLC, payment terms are Net 30 for 4x Dell PowerEdge R760 servers."
+  },
+  {
+    "id": "up_04",
+    "question": "What was the root cause and resolution of incident INC-2026-0915 in the incident report?",
+    "file_type": "TXT",
+    "query_scope": "single_document",
+    "target_doc_ids": ["doc_771891a2"],
+    "target_filename": "server_incident_report.txt",
+    "expected_answer_keywords": ["disk i/o saturation", "hnsw", "snapshot", "02:00 utc", "nvme ssd"],
+    "expected_answer": "Root cause was disk I/O saturation on HNSW index cache during snapshots. Resolved by rescheduling to 02:00 UTC and provisioning 5000 IOPS NVMe SSD volume."
+  },
+  {
+    "id": "up_05",
+    "question": "What contact email and location are listed on Alex Mehta's resume?",
+    "file_type": "PDF",
+    "query_scope": "single_document",
+    "target_doc_ids": ["doc_eb076b64"],
+    "target_filename": "Alex_Mehta_Resume.pdf",
+    "expected_answer_keywords": ["alex.mehta.demo@example.com", "Bengaluru", "India"],
+    "expected_answer": "Contact email is alex.mehta.demo@example.com located in Bengaluru, India."
+  },
+  {
+    "id": "up_06",
+    "question": "Compare Alex Mehta's resume skills with the Northstar AI software engineering internship requirements.",
+    "file_type": "PDF",
+    "query_scope": "multi_document_comparison",
+    "target_doc_ids": ["doc_eb076b64", "doc_94520dc7"],
+    "target_filename": "Alex_Mehta_Resume.pdf + Northstar_AI_Software_Engineer_Internship_JD.pdf",
+    "expected_answer_keywords": ["alex mehta", "python", "northstar", "skills", "internship"],
+    "expected_answer": "Alex demonstrates software engineering and ML coursework aligned with Northstar AI platform engineering requirements."
+  },
+  {
+    "id": "up_07",
+    "question": "Compare candidate Sudeep Kagi's demonstrated background with the OpenText developer role requirements.",
+    "file_type": "PDF",
+    "query_scope": "multi_document_comparison",
+    "target_doc_ids": ["doc_bd713dba", "doc_25b5c168"],
+    "target_filename": "resume.pdf + internship_jd.pdf",
+    "expected_answer_keywords": ["sudeep", "opentext", "engineering", "ai/ml", "skills"],
+    "expected_answer": "Candidate demonstrates enterprise systems engineering and document processing matching OpenText AI/ML developer competencies."
+  },
+  {
+    "id": "up_08",
+    "question": "Identify which vendor provided the server hardware in the approval email and which vendor was audited in the security assessment.",
+    "file_type": "EML + DOCX",
+    "query_scope": "multi_document",
+    "target_doc_ids": ["doc_4ca5a3b1", "doc_21dec666"],
+    "target_filename": "invoice_po9981.eml + CloudNet_Security_Assessment.docx",
+    "expected_answer_keywords": ["Enterprise Compute Solutions", "CloudNet"],
+    "expected_answer": "Enterprise Compute Solutions LLC provided the servers in the email, while CloudNet was the vendor evaluated in the security assessment."
+  }
+]

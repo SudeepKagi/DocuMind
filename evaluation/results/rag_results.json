@@ -1,0 +1,258 @@
+{
+  "benchmark": "rag_question_answering",
+  "model": "Qwen/Qwen2.5-1.5B-Instruct (Grounded RAG)",
+  "total_benchmark_questions": 14,
+  "metrics": {
+    "retrieval_hit_rate": 1.0,
+    "citation_grounding_accuracy": 0.0,
+    "mean_token_f1": 0.2855,
+    "exact_match_rate": 0.0,
+    "hallucination_rate": 0.0,
+    "latency": {
+      "mean_retrieval_latency_ms": 2738.26,
+      "mean_generation_latency_ms": 15516.8,
+      "mean_total_latency_ms": 18255.06
+    }
+  },
+  "per_question_results": [
+    {
+      "question_id": "rag_01",
+      "question": "What is the total gross amount and amount due for invoice_0292?",
+      "category": "factual_extraction",
+      "target_doc_ids": [
+        "invoice_0292"
+      ],
+      "expected_answer": "The total gross amount for invoice_0292 is $325.00 and the net amount due is $276.25.",
+      "generated_answer": "The total gross amount for invoice_0292 is $276.25. The amount due for this invoice is also $276.25. \n\nExplanation:\nFrom SOURCE 1, we can see that the Net Amount Due for invoice_0292 is listed as $276.25. Since there is no additional information provided about any adjustments or deductions from the net amount, it implies that the Gross Amount Due is equal to the Net Amount Due in this case.",
+      "cited_source": "",
+      "retrieval_hit": true,
+      "citation_correct": false,
+      "token_f1": 0.2933,
+      "exact_match": 0.0,
+      "is_hallucination": false,
+      "latency_ms": 18935.38
+    },
+    {
+      "question_id": "rag_02",
+      "question": "Who is the buyer and client code in invoice_0292?",
+      "category": "factual_extraction",
+      "target_doc_ids": [
+        "invoice_0292"
+      ],
+      "expected_answer": "The buyer is Eagle Radio of Great Bend and the agency client code is ISCI.",
+      "generated_answer": "The buyer for invoice_0292 is Eagle Radio of Great Bend, located at 1200 Baker Avenue, P.O. Box 609, Great Bend, KS 67530. The corresponding client code is ISCI. \n\nExplanation:\nFrom the provided evidence, we can see that the \"Buyer Name\" field on page 1 of the invoice states \"Eagle Radio of Great Bend\". This directly identifies Eagle Radio as the buyer.",
+      "cited_source": "",
+      "retrieval_hit": true,
+      "citation_correct": false,
+      "token_f1": 0.3235,
+      "exact_match": 0.0,
+      "is_hallucination": false,
+      "latency_ms": 17033.54
+    },
+    {
+      "question_id": "rag_03",
+      "question": "Explain the early termination fee provisions in contract_0086.",
+      "category": "explanation",
+      "target_doc_ids": [
+        "contract_0086"
+      ],
+      "expected_answer": "Under Clause 16.5 of contract_0086, the Company may terminate the Agreement for convenience by Notice of termination, following which the Repairer shall invoice an early termination fee.",
+      "generated_answer": "The early termination fee in contract_0086 is calculated based on the remaining services that were not fully terminated according to clause 16.5. Specifically, the fee is equivalent to [*****]% of the total work order price, payable within [*****] days after the issuance of the invoice. This fee can be deducted from any outstanding or due payments made by the company to the repairer. If the repairer chooses to pursue legal action instead of paying the fee, they must follow the procedures outlined in clause 24 regarding governing law and arbitration.",
+      "cited_source": "",
+      "retrieval_hit": true,
+      "citation_correct": false,
+      "token_f1": 0.24,
+      "exact_match": 0.0,
+      "is_hallucination": false,
+      "latency_ms": 17926.39
+    },
+    {
+      "question_id": "rag_04",
+      "question": "What constitutes a Termination Event under contract_0154?",
+      "category": "definition",
+      "target_doc_ids": [
+        "contract_0154"
+      ],
+      "expected_answer": "Under contract_0154, a Termination Event occurs if a party materially breaches obligations uncured for 30 calendar days, becomes insolvent or enters bankruptcy/receivership, merges or transfers 50% or more voting securities, or violates financial services regulations.",
+      "generated_answer": "A Termination Event under contract_0154 occurs if a Party materially breaches its obligations under this Agreement, an Order, or any Customization Schedule, and the breach is not cured within thirty (30) calendar days after written notice of the breach and intent to terminate is provided by the other Party. Additionally, a Termination Event may occur if Supplier either merges with another entity, suffers a transfer involving fifty (50%) percent or more of any class of its voting securities, or transfers all, or substantially all, of its assets.",
+      "cited_source": "",
+      "retrieval_hit": true,
+      "citation_correct": false,
+      "token_f1": 0.4107,
+      "exact_match": 0.0,
+      "is_hallucination": false,
+      "latency_ms": 19368.63
+    },
+    {
+      "question_id": "rag_05",
+      "question": "How are liquidated damages calculated if contract_0229 terminates before the opening date but after hotel work begins?",
+      "category": "calculation",
+      "target_doc_ids": [
+        "contract_0229"
+      ],
+      "expected_answer": "If termination occurs after beginning Hotel Work but before the Opening Date, liquidated damages are equal to $3,600 multiplied by the number of approved Guest Rooms at the Hotel, unless due to Force Majeure.",
+      "generated_answer": "If contract_0229 terminates before the opening date but after hotel work begins, liquidated damages are calculated based on the number of approved guest rooms at the hotel. Specifically, if the termination occurs before the hotel work starts and before the opening date, the liquidated damages are calculated as $3,600 times the number of approved guest rooms. If the termination occurs after the hotel work starts but before the opening date, the liquidated damages are calculated similarly, except without the requirement that the failure to complete the hotel work was the result of force majeure.",
+      "cited_source": "",
+      "retrieval_hit": true,
+      "citation_correct": false,
+      "token_f1": 0.4404,
+      "exact_match": 0.0,
+      "is_hallucination": false,
+      "latency_ms": 17579.7
+    },
+    {
+      "question_id": "rag_06",
+      "question": "In invoice_0292, how many broadcast spots were billed at $25 each?",
+      "category": "calculation",
+      "target_doc_ids": [
+        "invoice_0292"
+      ],
+      "expected_answer": "In invoice_0292, there are 13 spots billed at $25 each, totaling $325.00 gross.",
+      "generated_answer": "Based on the evidence provided in invoice_0292, there were 13 broadcast spots billed at $25 each. The total amount for these spots is $325.00, which matches the gross amount shown in the invoice. Therefore, the number of spots billed at $25 each is 13. \n\nExplanation:\nThe invoice details show that there are 13 different products listed under \"ISCI\" with a price of $25 per spot. Each product represents one broadcast spot.",
+      "cited_source": "",
+      "retrieval_hit": true,
+      "citation_correct": false,
+      "token_f1": 0.3117,
+      "exact_match": 0.0,
+      "is_hallucination": false,
+      "latency_ms": 18920.81
+    },
+    {
+      "question_id": "rag_07",
+      "question": "In contract_0112, which party is the licensor and which is the licensee, and what happens to revenue sharing upon termination?",
+      "category": "multi_hop",
+      "target_doc_ids": [
+        "contract_0112"
+      ],
+      "expected_answer": "PACIFICAP ENTERTAINMENT INC. is the Licensor and THE HENRY FILM AND ENTERTAINMENT CORPORATION is the Licensee. All revenue sharing ceases with the termination of the Agreement.",
+      "generated_answer": "In contract_0112, Pacificap Entertainment is the licensor and The Henry Film & Entertainment Corporation is the licensee. Upon termination of the agreement, revenue sharing ceases. \n\nExplanation: \nThe evidence indicates that Pacificap Entertainment holds the rights to sell advertising, syndication fees, licensing fees, and other related services for content produced by The Henry Film & Entertainment Corporation. The agreement specifies that Pacificap Entertainment must share a minimum of $50,000 annually for each year of the agreement unless The Henry Film & Entertainment Corporation fails to meet this performance requirement.",
+      "cited_source": "",
+      "retrieval_hit": true,
+      "citation_correct": false,
+      "token_f1": 0.3789,
+      "exact_match": 0.0,
+      "is_hallucination": false,
+      "latency_ms": 18885.35
+    },
+    {
+      "question_id": "rag_08",
+      "question": "List the key warranties CRO provides to Client in contract_0356.",
+      "category": "enumeration",
+      "target_doc_ids": [
+        "contract_0356"
+      ],
+      "expected_answer": "CRO warrants that Services will be performed in a professional and workmanlike manner on a best endeavours basis according to standard of care, and that work performed will be correct in all material respects.",
+      "generated_answer": "CRO provides the following warranties to Client in contract_0356:\n\n1. All inventions and technical or business innovations specifically derived from the work assigned by Client to CRO will be disclosed and assigned to Client as its exclusive property.\n2. Deliverables and work products developed by CRO will be deemed works made for hire and belong fully and exclusively to Client.\n3. CRO will execute necessary documents and assist Client to obtain patents, copyrights, etc., for any inventions or innovations covered by the agreement.\n4.",
+      "cited_source": "",
+      "retrieval_hit": true,
+      "citation_correct": false,
+      "token_f1": 0.1947,
+      "exact_match": 0.0,
+      "is_hallucination": false,
+      "latency_ms": 16701.5
+    },
+    {
+      "question_id": "rag_09",
+      "question": "What remedies are available upon default under contract_0086?",
+      "category": "enumeration",
+      "target_doc_ids": [
+        "contract_0086"
+      ],
+      "expected_answer": "Remedies include court action following arbitration to enforce performance, recover damages, repossess Items, and seek reimbursement of expenses and losses.",
+      "generated_answer": "Under contract_0086, upon default, the remedies include indemnification and payment of losses sustained by the non-defaulting party. Additionally, the Repairer can suspend services based on a notice of suspension specifying the services affected and the need for correction of the default. Furthermore, the Repairer can use, apply, or retain the Security Deposit to remedy the default, provided these actions discharge the relevant sums due to the Repairer. After the term ends, the Repairer must pay back the remaining balance of the Security Deposit if there was no ongoing default.",
+      "cited_source": "",
+      "retrieval_hit": true,
+      "citation_correct": false,
+      "token_f1": 0.1505,
+      "exact_match": 0.0,
+      "is_hallucination": false,
+      "latency_ms": 15859.07
+    },
+    {
+      "question_id": "rag_10",
+      "question": "Who is the vendor listed in purchase order po_0000?",
+      "category": "factual_extraction",
+      "target_doc_ids": [
+        "po_0000"
+      ],
+      "expected_answer": "The vendor listed in purchase order po_0000 is KGAB.",
+      "generated_answer": "Based on the provided evidence, the vendor listed in purchase order PO_0000 is Labstat International Inc., located at 262 Manitou Drive, Kitchener, Ontario, Canada N2C IL3. The relevant details from the documents include:\n- Purchase requisition number: 42514940\n- Requisitioner phone number: 274-5855\n- Supplier suggested: Labstat International Inc.",
+      "cited_source": "",
+      "retrieval_hit": true,
+      "citation_correct": false,
+      "token_f1": 0.28,
+      "exact_match": 0.0,
+      "is_hallucination": false,
+      "latency_ms": 17954.95
+    },
+    {
+      "question_id": "rag_11",
+      "question": "What is the contact phone number for the requisitioner in po_0002?",
+      "category": "factual_extraction",
+      "target_doc_ids": [
+        "po_0002"
+      ],
+      "expected_answer": "The requisitioner phone number in po_0002 is 804-274-5214.",
+      "generated_answer": "The contact phone number for the requisitioner in PO_0002 is 274-3882. This can be found in SOURCE 1 where it states \"Requisitioner Phone No.\" under the Purchase Requisition details. The requisition number (PO_0002) is also mentioned in this source. \n\nExplanation:\nIn SOURCE 1, the requisition number is listed as PO_0002, which matches the query. Additionally, the phone number for the requisitioner is provided directly under the \"Requisitioner Phone No.\" field.",
+      "cited_source": "",
+      "retrieval_hit": true,
+      "citation_correct": false,
+      "token_f1": 0.1765,
+      "exact_match": 0.0,
+      "is_hallucination": false,
+      "latency_ms": 20557.88
+    },
+    {
+      "question_id": "rag_12",
+      "question": "Why does contract_0356 limit liability to the sum of amounts received, and what exceptions exist?",
+      "category": "explanation",
+      "target_doc_ids": [
+        "contract_0356"
+      ],
+      "expected_answer": "Total liability in respect of damages is limited to amounts received from Client, with exceptions for claims arising from inventions and proprietary information, indemnification obligations, gross negligence, or willful misconduct.",
+      "generated_answer": "Contract_0356 limits liability to the sum of amounts received due to the nature of CRO being an independent contractor and not an employee of Client. Exceptions exist when CRO breaches certain conditions, such as material breach leading to a refund of credits held in favor of CRO within 30 days after termination. Additionally, CRO cannot use, publish, or disclose any information provided under the terms of the agreement except as authorized. These limitations aim to protect Client while ensuring fair compensation for services rendered.",
+      "cited_source": "",
+      "retrieval_hit": true,
+      "citation_correct": false,
+      "token_f1": 0.2243,
+      "exact_match": 0.0,
+      "is_hallucination": false,
+      "latency_ms": 18058.7
+    },
+    {
+      "question_id": "rag_13",
+      "question": "Compare the notice period required for material breach before termination in contract_0112 versus contract_0154.",
+      "category": "document_comparison",
+      "target_doc_ids": [
+        "contract_0112",
+        "contract_0154"
+      ],
+      "expected_answer": "Both contract_0112 and contract_0154 provide a thirty (30) day written notice cure period for a material breach before termination can take effect.",
+      "generated_answer": "The notice period required for a material breach before termination in contract_0112 is 30 days, while it is 0 days in contract_0154. Therefore, there is no material breach notice period difference between these two contracts. \n\nExplanation: \nIn contract_0112, the notice period for a material breach before termination is explicitly stated as 30 days. This indicates that the breaching party must provide written notice within 30 days of the occurrence of a material breach.",
+      "cited_source": "",
+      "retrieval_hit": true,
+      "citation_correct": false,
+      "token_f1": 0.2791,
+      "exact_match": 0.0,
+      "is_hallucination": false,
+      "latency_ms": 19101.53
+    },
+    {
+      "question_id": "rag_14",
+      "question": "How is Confidential Information defined and protected in contract_0112?",
+      "category": "definition",
+      "target_doc_ids": [
+        "contract_0112"
+      ],
+      "expected_answer": "Confidential Information relates to the party's business identified at disclosure. Both parties agree to preserve and protect confidentiality and not disclose without prior written consent, surviving termination.",
+      "generated_answer": "In contract_0112, Confidential Information refers to all trademarks, service marks, logos, and other distinctive brand features of THE HENRY FILM AND ENTERTAINMENT CORPORATION related to its properties and content. It includes all materials, data, and similar information collected and owned by PACIFICAP ENTERTAINMENT. Confidentiality is maintained by both parties agreeing not to disclose or use any Confidential Information without prior written consent. This protection extends even when the information is already public knowledge, discovered independently, or obtained legally.",
+      "cited_source": "",
+      "retrieval_hit": true,
+      "citation_correct": false,
+      "token_f1": 0.2941,
+      "exact_match": 0.0,
+      "is_hallucination": false,
+      "latency_ms": 18687.43
+    }
+  ]
+}

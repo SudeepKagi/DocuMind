@@ -1,0 +1,122 @@
+[
+  {
+    "id": "agent_01",
+    "query": "What type of document is invoice_0292?",
+    "category": "classification_only",
+    "expected_tools": ["classification"]
+  },
+  {
+    "id": "agent_02",
+    "query": "Classify contract_0086 into its document category",
+    "category": "classification_only",
+    "expected_tools": ["classification"]
+  },
+  {
+    "id": "agent_03",
+    "query": "Which document class does email_0001 belong to?",
+    "category": "classification_only",
+    "expected_tools": ["classification"]
+  },
+  {
+    "id": "agent_04",
+    "query": "Identify the document category for report_0367",
+    "category": "classification_only",
+    "expected_tools": ["classification"]
+  },
+  {
+    "id": "agent_05",
+    "query": "What is the total amount of invoice_0292?",
+    "category": "metadata_only",
+    "expected_tools": ["metadata"]
+  },
+  {
+    "id": "agent_06",
+    "query": "What is the gross amount due in invoice_0000?",
+    "category": "metadata_only",
+    "expected_tools": ["metadata"]
+  },
+  {
+    "id": "agent_07",
+    "query": "Extract the total amount from invoice_0004",
+    "category": "metadata_only",
+    "expected_tools": ["metadata"]
+  },
+  {
+    "id": "agent_08",
+    "query": "What is the balance due in invoice_0292?",
+    "category": "metadata_only",
+    "expected_tools": ["metadata"]
+  },
+  {
+    "id": "agent_09",
+    "query": "Which contracts mention early termination penalties?",
+    "category": "search_only",
+    "expected_tools": ["search"]
+  },
+  {
+    "id": "agent_10",
+    "query": "Search for documents discussing indemnification obligations",
+    "category": "search_only",
+    "expected_tools": ["search"]
+  },
+  {
+    "id": "agent_11",
+    "query": "Find documents containing confidentiality and non-disclosure clauses",
+    "category": "search_only",
+    "expected_tools": ["search"]
+  },
+  {
+    "id": "agent_12",
+    "query": "Show me purchase orders sent to vendor KGAB",
+    "category": "search_only",
+    "expected_tools": ["search"]
+  },
+  {
+    "id": "agent_13",
+    "query": "Explain what invoice_0292 contains.",
+    "category": "rag_only",
+    "expected_tools": ["rag_qa"]
+  },
+  {
+    "id": "agent_14",
+    "query": "How is the termination fee calculated in contract_0086?",
+    "category": "rag_only",
+    "expected_tools": ["rag_qa"]
+  },
+  {
+    "id": "agent_15",
+    "query": "Describe the obligations of the licensee under contract_0112",
+    "category": "rag_only",
+    "expected_tools": ["rag_qa"]
+  },
+  {
+    "id": "agent_16",
+    "query": "Why did CRO limit liability in contract_0356?",
+    "category": "rag_only",
+    "expected_tools": ["rag_qa"]
+  },
+  {
+    "id": "agent_17",
+    "query": "What kind of document is invoice_0292 and what is its total gross amount?",
+    "category": "multi_tool",
+    "expected_tools": ["classification", "metadata"]
+  },
+  {
+    "id": "agent_18",
+    "query": "Identify the document type of contract_0086 and explain its early termination clause",
+    "category": "multi_tool",
+    "expected_tools": ["classification", "rag_qa"]
+  },
+  {
+    "id": "agent_19",
+    "query": "What type of document is invoice_0292 and what are its payment terms?",
+    "category": "multi_tool",
+    "expected_tools": ["classification", "rag_qa"]
+  },
+  {
+    "id": "agent_20",
+    "query": "Search for contracts with termination fees and explain how penalties are computed",
+    "category": "multi_tool",
+    "expected_tools": ["search", "rag_qa"]
+  }
+]

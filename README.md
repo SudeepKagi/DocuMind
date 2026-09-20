@@ -1,4 +1,4 @@
-# DocuMind &mdash; Enterprise Document Intelligence Platform
+# DocuMind | Enterprise Document Intelligence
 
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![React](https://img.shields.io/badge/Frontend-React%2019-61DAFB?style=flat&logo=react&logoColor=black)](https://react.dev)
@@ -6,482 +6,267 @@
 [![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL%2016-4169E1?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org)
 [![ChromaDB](https://img.shields.io/badge/Vector%20Store-ChromaDB-FF6F00?style=flat)](https://www.trychroma.com)
 [![PyTorch](https://img.shields.io/badge/ML%20Core-PyTorch%20%7C%20CUDA-EE4C2C?style=flat&logo=pytorch&logoColor=white)](https://pytorch.org)
-[![HuggingFace](https://img.shields.io/badge/Models-DistilBERT%20%7C%20BGE%20%7C%20Qwen2.5-FFD21E?style=flat&logo=huggingface&logoColor=black)](https://huggingface.co)
+[![Transformers](https://img.shields.io/badge/Models-DistilBERT%20%7C%20LayoutLM%20%7C%20BGE%20%7C%20Qwen2.5-FFD21E?style=flat&logo=huggingface&logoColor=black)](https://huggingface.co)
 
-DocuMind is an enterprise full-stack document intelligence platform designed to ingest, classify, parse, index, search, and autonomously reason over heterogeneous corporate documents. It bridges the gap between static institutional knowledge bases (contracts, invoices, regulatory filings, and correspondence) and dynamic, multi-tenant ad-hoc user uploads through unified agentic orchestration.
+DocuMind is a full-stack enterprise document intelligence platform designed around modular, reusable pipelines:
 
----
+$$\text{Document Ingestion} \longrightarrow \text{Document Classification} \longrightarrow \text{Metadata Extraction} \longrightarrow \text{Hybrid Retrieval} \longrightarrow \text{Grounded RAG} \longrightarrow \text{Agentic Orchestration} \longrightarrow \text{Uploaded-Document Intelligence}$$
 
-## 1. Project Overview
-
-Modern enterprises accumulate millions of mission-critical documents scattered across PDFs, Word documents, scanned invoices, and email archives. Finding information or auditing terms across these repositories requires high cognitive effort and manual verification.
-
-DocuMind provides an end-to-end intelligent document platform featuring:
-- **Pre-Indexed Corporate Corpus:** A searchable, classified corpus of 6,638 enterprise documents.
-- **Multi-Tenant User Ingestion:** Real-time ingestion and chunking of user-uploaded files with page-level traceability.
-- **Autonomous Agentic Orchestration:** An intelligent planner that classifies user query intent and dispatches queries across specialized tools (DistilBERT classification, regex/tabular invoice extraction, BM25 + BGE hybrid search, and Qwen grounded generative RAG).
+Rather than being tied to a single fixed document or static dataset, DocuMind provides an extensible, service-oriented architecture capable of processing both historical institutional corpora and dynamic, multi-tenant user uploads through unified agentic orchestration.
 
 ---
 
-## 2. Problem Statement
+## Technology Stack
 
-Corporate document repositories present unique challenges for traditional search and LLM systems:
-1. **Structural Heterogeneity:** Unstructured legal agreements (CUAD), semi-structured financial invoices/purchase orders (Docile), and unstructured communication (Enron emails) require different extraction and reasoning strategies.
-2. **Lexical vs. Semantic Mismatch:** Keyword-only search fails on conceptual legal questions (*"What are the indemnification liabilities?"*), while pure vector search often misses exact identifiers, purchase order numbers, or alphanumeric invoice codes (*"PO-99812"*).
-3. **Hallucination in Enterprise QA:** Generative models without strict citation grounding hallucinate terms, dates, and financial amounts.
-4. **Tenant Isolation & Freshness:** Organizations need immediate semantic querying over newly uploaded documents while preserving strict multi-tenant data boundaries and auditability.
-
----
-
-## 3. Core Features
-
-- **Document Classification:** Fine-tuned DistilBERT model delivering **99.7% test accuracy** across 5 enterprise categories (*Contracts, Invoices, Purchase Orders, Reports, Emails*).
-- **Financial Metadata Extraction:** Deterministic, audit-grade parsing of gross amounts, net balances, dates, and vendor entities from invoices and purchase orders.
-- **Hybrid Lexical & Semantic Retrieval:** Reciprocal Rank Fusion (RRF) combining BM25s sparse lexical scoring with BAAI/bge-small-en-v1.5 dense vector embeddings.
-- **Grounded Generative RAG:** Qwen2.5-1.5B-Instruct language model conditioned on retrieved passages with mandatory source chunk and page citations.
-- **User Document Ingestion Pipeline:** Multi-format parser supporting **PDF, DOCX, TXT, and EML** files, preserving exact page numbers and metadata.
-- **Relational Ownership & Audit Trail:** PostgreSQL 16 database tracking users, document lifecycle status, chunk counts, and storage paths.
-- **Multi-Tenant Persistent Vector Store:** ChromaDB with cosine similarity search strictly partitioned by tenant ID (`user_id`).
-- **Autonomous Multi-Source Agent:** Query router classifying questions into `CORPUS`, `UPLOADED`, or `BOTH` (comparative cross-system synthesis).
-- **Enterprise SaaS UI:** React 19 + Vite desktop-first interface with real-time multi-stage loading radar, inspection traces, document management, and one-click copy actions.
+- **Frontend:** React 19, Vite 8, Vanilla CSS Design System with dark SaaS tokens
+- **Backend:** FastAPI, Python 3.11+, SQLAlchemy 2.0, Alembic, PostgreSQL 16, ChromaDB
+- **ML / AI Components:**
+  - **Document Classification:** Fine-tuned `distilbert-base-uncased` (5 classes)
+  - **Structured Extraction:** Fine-tuned `LayoutLM` multi-label token classifier + deterministic spatial extractors
+  - **Dense Semantic Retrieval:** `BAAI/bge-small-en-v1.5` (384-dimensional embeddings)
+  - **Sparse Lexical Retrieval:** `BM25S` inverted index with token-level BM25 scoring
+  - **Generative Language Model:** `Qwen/Qwen2.5-1.5B-Instruct` for context-grounded synthesis
+- **Infrastructure & Tooling:** PyTorch (CUDA / CPU), Hugging Face Transformers, Docker & Docker Compose
 
 ---
 
-## 4. End-to-End System Architecture
+## System Architecture
 
-```
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                                   React 19 + Vite UI                                   │
-│            (Desktop SaaS: Sidebar, Query Bar, Agent Activity Traces, Document Hub)     │
-└───────────────────────────────────────────┬────────────────────────────────────────────┘
-                                            │ HTTP / JSON (REST API)
-                                            ▼
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                                 FastAPI Backend Server                                 │
-│  ┌───────────────────────┐  ┌────────────────────────┐  ┌───────────────────────────┐  │
-│  │   /agent (Router)     │  │ /documents (Lifecycle)  │  │ /classify, /search, /qa   │  │
-│  └───────────┬───────────┘  └───────────┬────────────┘  └─────────────┬─────────────┘  │
-└──────────────┼──────────────────────────┼─────────────────────────────┼────────────────┘
-               │                          │                             │
-               ▼                          ▼                             ▼
-┌──────────────────────────────┐ ┌──────────────────┐         ┌──────────────────────────┐
-│  Agent Orchestration Service │ │  PostgreSQL 16   │         │    ChromaDB Vector Store │
-│  (Intent: CORPUS/UPLOAD/BOTH)│ │  - Users         │         │  - Uploaded Chunks       │
-└──────────────┬───────────────┘ │  - Document Meta │         │  - Tenant Isolation      │
-               │                 │  - Status        │         │  - Cosine Distance       │
-               │                 └──────────────────┘         └─────────────┬────────────┘
-               ▼                                                            │
-┌───────────────────────────────────────────────────────────────┐           │
-│                    Machine Learning Core                      │           │
-│  ┌───────────────────────────────────┬─────────────────────┐  │           │
-│  │ DistilBERT Classifier (5 classes) │ BM25s Lexical Index │  │           │
-│  ├───────────────────────────────────┼─────────────────────┤  │           │
-│  │ BGE-small-en-v1.5 Embeddings      │ Qwen2.5-1.5B-Instruct│◄─┴───────────┘
-│  └───────────────────────────────────┴─────────────────────┘  │
-└───────────────────────────────────────────────────────────────┘
+DocuMind cleanly decouples user interaction, API routing, agent orchestration, machine learning inference, and storage:
+
+```mermaid
+flowchart TD
+    User([Enterprise User]) --> UI[React 19 + Vite Frontend]
+    UI --> API[FastAPI Application Backend]
+    
+    API --> AgentLayer[Agent & Orchestration Layer]
+    AgentLayer --> Classify[Document Classifier<br/>DistilBERT]
+    AgentLayer --> Extract[Metadata Extractor<br/>LayoutLM + Heuristics]
+    AgentLayer --> Hybrid[Hybrid Search Engine<br/>BM25S + BGE Embeddings]
+    AgentLayer --> GroundedRAG[Grounded Enterprise RAG<br/>Qwen2.5-1.5B-Instruct]
+    AgentLayer --> UploadRAG[Uploaded Document RAG<br/>Parser + BGE + ChromaDB]
+    
+    subgraph DataLayer["Data & Index Persistence Layer"]
+        PG[(PostgreSQL 16<br/>Users, Document Records, File Metadata)]
+        ChromaStore[(ChromaDB Vector Store<br/>Multi-Tenant Upload Embeddings)]
+        CorpusIndex[(Corpus Index<br/>223k Passages in BM25S + BGE)]
+    end
+    
+    API --> PG
+    Hybrid --> CorpusIndex
+    GroundedRAG --> CorpusIndex
+    UploadRAG --> ChromaStore
 ```
 
+### Data Layer Roles
+- **PostgreSQL 16:** System of record for user accounts, document metadata, file lifecycle statuses, chunk indices, and multi-tenant permissions.
+- **ChromaDB:** Isolated vector storage for user-uploaded document chunks, indexed with cosine distance and filtered by `user_id`.
+- **Local BM25 / BGE Indexes:** Dual lexical and dense representation covering the pre-indexed enterprise knowledge corpus (223,234 passages).
+
 ---
 
-## 5. Machine Learning Pipeline
+## Supported Document Types & Formats
+
+The architecture explicitly differentiates between document classification categories and file ingestion formats:
+
+- **Classification Categories (Fine-Tuned DistilBERT):**
+  - `Contract` (commercial agreements, NDAs, master service agreements)
+  - `Invoice` (standard billing, vendor invoices, credit memos)
+  - `Purchase Order` (procurement authorizations, line-item orders)
+  - `Email` (internal corporate communications, notices, correspondence)
+  - `Report` (operational reviews, SEC filings, audit reports)
+
+- **Uploaded Document Ingestion Formats (Multi-Format Parsers):**
+  - **PDF (`.pdf`):** Digital text stream extraction with exact page-level mapping via `pypdf`.
+  - **Word (`.docx`):** Structural paragraph and table traversal via `python-docx`.
+  - **Plain Text (`.txt`):** Structured line and block tokenization with UTF-8 / Latin-1 encoding detection.
+  - **Email (`.eml`):** Multipart message parsing with header isolation (`From`, `To`, `Subject`, `Date`) and body decoding.
+
+---
+
+## Key Features
+
+1. **AI Document Classification:** Identifies document types using fine-tuned DistilBERT with sliding-window multi-chunk pooling.
+2. **Structured Metadata Extraction:** Reconstructs financial amounts, billing entities, dates, and order numbers using token-level spatial LayoutLM and deterministic rules.
+3. **Hybrid Semantic + Lexical Retrieval:** Combines sparse BM25S lexical precision with dense BGE semantic matching using Reciprocal Rank Fusion (RRF, $k=60$).
+4. **Grounded Question Answering:** Generates context-bounded answers using Qwen2.5-1.5B-Instruct conditioned strictly on retrieved evidence.
+5. **Multi-Tool Agent Orchestration:** Automatically identifies user intent (`CORPUS`, `UPLOADED`, or `BOTH`), selecting and chaining classification, extraction, search, and RAG tools.
+6. **Multi-Format Document Ingestion:** Parses PDFs, Word documents, text files, and email files with page-level structural preservation.
+7. **ChromaDB-Backed Uploaded RAG:** Provides isolated, on-the-fly semantic search and synthesis over dynamic user uploads.
+8. **PostgreSQL Relational Management:** Manages document lifecycles, user ownership, chunk counts, and file references with relational audit integrity.
+9. **Automated Evaluation Framework:** Comprehensive, reproducible evaluation suites measuring accuracy, F1, retrieval recall, and latency across all components.
+
+---
+
+## Evaluation & Benchmarks
+
+DocuMind includes a fully automated, reproducible evaluation framework that executes against local model checkpoints, processed datasets, and vector indexes without cloud API dependencies.
+
+For complete methodologies, per-class breakdowns, confusion matrices, and latency graphs:
+- **[View Consolidated Evaluation Matrix](docs/evaluation/evaluation_matrix.md)**
+- **[View Technical Evaluation Report](docs/evaluation/evaluation_report.md)**
+
+The evaluation framework reports standard quantitative metrics across 6 distinct suites:
+- **Document Classification:** Overall Accuracy, Macro F1, Weighted F1, Per-class Precision/Recall, $5 \times 5$ Confusion Matrix.
+- **Metadata Extraction:** Strict Exact Match (EM), Mean Character Similarity (Levenshtein), Success Rate @ 0.80, Token-level F1.
+- **Hybrid Retrieval:** Recall@K ($K \in \{1, 3, 5, 10\}$), Mean Reciprocal Rank (MRR), nDCG@10.
+- **Grounded Enterprise RAG:** Retrieval Hit Rate, Hallucination Rate, Mean Token F1, End-to-End Latency.
+- **Agent Tool Routing:** Tool Selection Accuracy, Single-Tool vs Multi-Tool routing, Unnecessary Call Rate, Routing Latency.
+- **Uploaded Document RAG:** Recall@5, Source Attribution Accuracy, Keyword Grounding Recall.
+
+### Selected Empirical Results
+
+The following table summarizes empirical measurements obtained from local benchmark execution:
+
+| Component | Target Model / System | Evaluated Benchmark Split | Primary Metric | Measured Score | Scope Notes |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Document Classification** | DistilBERT (`distilbert-base-uncased`) | `ml/processed/test.csv` (996 samples) | Overall Accuracy | **99.90%** (0.9990) | Held-out 5-class test split; Macro F1: **99.93%** (1 error / 996 docs) |
+| **Document Classification** | TF-IDF + Logistic Regression | `ml/processed/test.csv` (996 samples) | Overall Accuracy | **99.70%** (0.9970) | 30k n-gram baseline; DistilBERT achieves **+0.20%** accuracy delta |
+| **Metadata Extraction** | LayoutLM Multi-Label + Heuristics | 3,850 DocILE invoices (30,823 fields) | Success Rate @ 0.80 | **97.01%** (0.9701) | Normalized character similarity: **97.69%**; Token Macro F1: **87.46%** |
+| **Hybrid Retrieval** | Hybrid RRF ($k=60$, BM25S + BGE) | 223,234 corpus chunks (15 queries) | Recall@10 | **73.33%** (0.7333) | Outperforms BM25S alone (66.67%) and dense BGE alone (66.67%) |
+| **Grounded RAG** | Qwen2.5-1.5B-Instruct | 14 multi-category enterprise queries | Retrieval Hit Rate | **100.00%** (1.0000) | Supporting passage present in top-5; Hallucination Rate: **0.00%** |
+| **Agent Tool Routing** | Rule-Based Agent Orchestrator | 20 natural enterprise queries | Tool Selection Acc | **70.00%** (0.7000) | Single-tool: **75.00%**, Multi-tool: **50.00%**, Mean Latency: **0.019 ms** |
+| **Uploaded Document RAG** | ChromaDB + Qwen2.5-1.5B | 8 queries across PDF, DOCX, TXT, EML | Recall@5 / Source Acc | **100.00%** / **100.00%** | 100% correct file attribution across all 4 supported upload formats |
+
+> **Evaluation Scope & Note on Generalization:** Current benchmark results are measured on curated held-out test splits, annotated benchmark datasets (DocILE, CUAD, Enron), and structured local evaluation suites. While the modular pipeline is designed to be extensible to additional domains, additional out-of-distribution and cross-domain evaluations would be required to quantify performance on arbitrary, unseen enterprise corpora.
+
+---
+
+## Extensibility
+
+DocuMind is designed as an open, modular document intelligence architecture that can be extended across several dimensions without re-architecting the core application:
+
+- **Additional Document Classes:** New document categories can be introduced by fine-tuning the classification head or registering few-shot prompt classifiers in `services/documind_service.py`.
+- **Custom Metadata Schemas:** The extraction layer separates LayoutLM token classification from field-level parsing heuristics, allowing developers to define new extraction schemas (e.g., medical records, shipping manifests, tax forms).
+- **Alternative Retrieval Backends:** The hybrid search engine decouples candidate generation from rank fusion; BM25S can be replaced with Elasticsearch/OpenSearch, and BGE can be swapped for larger embedding models or specialized legal/financial encoders.
+- **Pluggable Vector Databases:** ChromaDB is encapsulated behind `chroma_service.py`, enabling straightforward migration to Milvus, Qdrant, Pinecone, or pgvector.
+- **Scalable Language Models:** The RAG pipeline communicates with local or hosted autoregressive models via standardized prompt assembly, allowing drop-in upgrades to larger models (e.g., Qwen2.5-7B, Llama-3.3-8B) or hosted endpoints.
+- **New Document Formats:** Format-specific parsers in `document_ingestion.py` output a uniform chunk data contract (`text`, `page_number`, `chunk_index`), making it easy to add support for HTML, Markdown, RTF, or image-based OCR formats.
+
+---
+
+## User Workflow & Usage
+
+DocuMind separates document lifecycle management from conversational reasoning into two dedicated interfaces:
+
+1. **Start Backend & Database:** Start PostgreSQL via Docker and run the FastAPI server on port 8000.
+2. **Start Frontend:** Launch Vite on port 5173 and navigate to `http://localhost:5173`.
+3. **Document Management (`Documents` View):**
+   - Click **Documents** in the sidebar to upload files (`.pdf`, `.docx`, `.txt`, `.eml`).
+   - Monitor real-time extraction status, view page/chunk counts, and inspect parsed chunks.
+4. **Conversational Intelligence (`Agent` View):**
+   - Click **Agent** in the sidebar (the primary query interface).
+   - Enter questions in natural language. The orchestrator automatically identifies intent and executes the required pipeline:
+     - *Classification:* `"What type of document is invoice_0292?"`
+     - *Metadata Extraction:* `"Extract the total gross amount and date for invoice_0292."`
+     - *Corpus Search & QA:* `"Explain the early termination fee provisions in contract_0086."`
+     - *Uploaded-Document QA:* `"What qualifications are required in my uploaded internship JD?"`
+     - *Cross-System Comparison:* `"Compare the notice period in contract_0112 with my uploaded agreement."`
+5. **Inspect Traces & Grounding:**
+   - Examine intermediate tool calls, class confidence scores, and verbatim retrieved source chunks supporting each answer.
+
+---
+
+## Repository Structure
 
 ```
-Raw Documents ──► Text Extraction ──► Chunking (500 chars / 50 overlap)
-                         │
-         ┌───────────────┴────────────────┐
-         ▼                                ▼
-DistilBERT Classifier              Embedding Engine
-(Contract, Invoice, PO,        (BAAI/bge-small-en-v1.5)
- Report, Email)                           │
-                                          ▼
-                               Hybrid Search Fusion
-                      ┌───────────────────┴───────────────────┐
-                      ▼                                       ▼
-               BM25s (Lexical)                        BGE Dense (Semantic)
-                      │                                       │
-                      └───────────────────┬───────────────────┘
-                                          ▼
-                             Reciprocal Rank Fusion (RRF)
-                                          │
-                                          ▼
-                              Top-k Context Passages
-                                          │
-                                          ▼
-                              Qwen2.5-1.5B-Instruct
-                         (Grounded Synthesis + Citation)
+DocuMind/
+├── backend/                  # FastAPI Application, DB Models, Services, REST Routes
+│   ├── alembic/              # Database migration scripts
+│   ├── db/                   # SQLAlchemy models and session management
+│   ├── routes/               # /agent and /documents REST API endpoints
+│   ├── schemas/              # Pydantic v2 request/response schemas
+│   ├── services/             # Orchestrator, ChromaDB, ingestion, and ML services
+│   └── main.py               # Application entry point and CORS configuration
+├── frontend/                 # React 19 + Vite 8 Desktop SaaS UI
+│   ├── src/                  # Components, views, API clients, and stylesheets
+│   ├── package.json          # Node dependencies and build scripts
+│   └── vite.config.js        # Vite bundler configuration
+├── ml/                       # Machine Learning Engineering Assets
+│   ├── notebooks/            # Exploratory analysis, training, and validation notebooks
+│   └── src/                  # Core ML agent, hybrid search, and inference tools
+├── agents/                   # Agent orchestration logic and multi-tool routing
+├── evaluation/               # Comprehensive Automated Evaluation Framework
+│   ├── agent/                # Agent intent and tool-routing benchmarks
+│   ├── classification/       # DistilBERT vs TF-IDF classification benchmarks
+│   ├── common/               # Metric computation utilities and result serializers
+│   ├── metadata/             # DocILE invoice metadata extraction benchmarks
+│   ├── rag/                  # Grounded Qwen enterprise QA benchmarks
+│   ├── results/              # Consolidated evaluation JSON results
+│   ├── retrieval/            # BM25S, BGE, and Hybrid RRF benchmarks
+│   ├── uploaded_rag/         # Multi-format ChromaDB RAG benchmarks
+│   └── run_all_evaluations.py# Master test suite runner
+├── docs/                     # Technical Documentation
+│   └── evaluation/           # Evaluation Matrix, Report, and Benchmark Design
+├── data/                     # Dataset references and schema definitions (git-ignored data)
+├── docker-compose.yml        # PostgreSQL container configuration
+├── .gitignore                # Exclusion rules for secrets, virtualenvs, models, and caches
+└── README.md                 # Project documentation and architecture guide
 ```
 
-1. **Classification:** Every document or query is evaluated by a sequence classification head fine-tuned on top of `distilbert-base-uncased`. Output logits are normalized via softmax to yield per-class confidence probabilities.
-2. **Metadata Extraction:** Invoices and purchase orders are evaluated through targeted extraction heuristics and tabular parser utilities, capturing `amount_total_gross`, vendor entities, and invoice dates.
-3. **Dense Semantic Retrieval:** Texts are embedded into a 384-dimensional dense vector space using `BAAI/bge-small-en-v1.5`. Query vectors are normalized for cosine similarity matching.
-4. **Lexical Retrieval:** A BM25s sparse inverted index provides token-level exact matching for specialized entities, invoice codes, and technical terminology.
-5. **Reciprocal Rank Fusion (RRF):** Scores from lexical and dense retrieval are fused using standard RRF:
-   $$RRF(d) = \sum_{m \in \{BM25, BGE\}} \frac{1}{60 + \text{rank}_m(d)}$$
-6. **Grounded Generation:** The top-ranked chunks form a structured prompt provided to `Qwen2.5-1.5B-Instruct` with instructions enforcing strict pass-through factual fidelity and chunk-ID citation.
-
 ---
 
-## 6. Agentic Orchestration
+## Local Setup & Quickstart
 
-The application-layer agent orchestrator (`backend/services/agent_orchestrator.py`) handles multi-stage queries without requiring brittle prompt chains:
+### Prerequisites
+- **Operating System:** Windows 10/11, macOS, or Linux
+- **Python:** 3.11 or 3.12 (with virtual environment support)
+- **Node.js:** Node 18+ and npm 9+
+- **Docker:** Docker Desktop or Docker Engine (for PostgreSQL)
+- **Hardware (Optional):** NVIDIA GPU with CUDA 12+ for accelerated local LLM inference; CPU fallback supported.
 
-- **Intent Classification:**
-  - **`CORPUS` Mode:** Triggered by references to standard corpus documents (`invoice_0292`, `contract_0041`), general corporate inquiries, or when no user documents are uploaded.
-  - **`UPLOADED` Mode:** Triggered when the query mentions user documents, uploaded filenames, resumes, candidate credentials, or specific terms found in user-uploaded files.
-  - **`BOTH` Mode:** Triggered when the user explicitly requests comparisons (*"Compare the termination clause in contract_0012 with my uploaded SLA"*).
-- **Multi-Tool Execution:**
-  - Invokes classification, metadata extraction, and hybrid retrieval in parallel or dependency order.
-  - Synthesizes findings into a unified, executive-ready final answer.
-  - Emits full execution traces including tool names, execution latencies, intermediate outputs, and retrieval confidence scores.
-
----
-
-## 7. Backend Architecture
-
-Built with **FastAPI** adhering to clean architecture principles:
-- **`backend/main.py`:** Application entry point, CORS middleware, lifespan events, and router registration.
-- **`backend/routes/`:**
-  - `agent.py`: Endpoints for autonomous agent orchestration, standalone classification, extraction, search, and QA.
-  - `documents.py`: RESTful document management lifecycle (upload, list, detail, isolated QA, delete).
-- **`backend/services/`:**
-  - `agent_orchestrator.py`: Multi-source query router and answer synthesizer.
-  - `chroma_service.py`: Multi-tenant ChromaDB client enforcing user isolation and cosine similarity retrieval.
-  - `document_ingestion.py`: Document format parsers (PDF, DOCX, TXT, EML) and character-level chunking.
-  - `uploaded_rag.py`: Coordinator for document ingestion, BGE vectorization, and Qwen QA.
-  - `documind_service.py`: Zero-overhead Python wrapper invoking existing ML models.
-- **`backend/db/`:**
-  - `database.py`: SQLAlchemy 2.0 engine, connection pooling (`pool_pre_ping=True`), and session generator.
-  - `models.py`: Declarative ORM models (`User`, `Document`).
-- **`backend/schemas/`:** Strict Pydantic v2 schemas for request validation and response serialization.
-- **`backend/alembic/`:** Versioned database schema migrations.
-
----
-
-## 8. Frontend Architecture
-
-Built with **React 19** and **Vite 8**, featuring custom SaaS CSS tokens:
-- **`Sidebar.jsx`:** Collapsible navigation with real-time backend health monitor, document counter, and feature toggles.
-- **`Header.jsx`:** Enterprise branding, capability tags (*DistilBERT, Hybrid RRF, Qwen RAG*), and status indicators.
-- **`QuerySection.jsx`:** Multi-line accessible input box with clickable sample query chips categorized by intent.
-- **`FinalAnswerCard.jsx`:** High-contrast synthesized answer card with formatted Markdown rendering and one-click copy to clipboard.
-- **`AgentActivity.jsx`:** Interactive execution trace cards showing:
-  - Tool invoked (`classification`, `metadata`, `hybrid_search`, `uploaded_rag`).
-  - Prediction confidence bars and class distribution percentages.
-  - Structured metadata key-value tables.
-  - Source chunk IDs with cosine similarity retrieval scores.
-- **`UploadedDocumentsView.jsx`:** Drag-and-drop document upload hub, file status badges, chunk inspection modal, and isolated single-document QA workbench.
-- **`LoadingState.jsx`:** Animated multi-stage radar loader communicating active pipeline phases.
-- **`ErrorState.jsx`:** Resilient error displays with contextual error details and retry actions.
-
----
-
-## 9. PostgreSQL Role
-
-PostgreSQL 16 serves as the persistent system of record for relational metadata and tenant isolation:
-- **Users Table (`users`):** Stores user identities, tenant IDs, email identifiers, and creation timestamps.
-- **Documents Table (`documents`):**
-  - Unique document UUID (`id`) linked via foreign key to `users.id` with `CASCADE` deletion.
-  - Original file metadata: `filename`, `file_type` (`PDF`, `DOCX`, `TXT`, `EML`), and `file_size` in bytes.
-  - Ingestion state tracking: `extraction_status` (`processing`, `processed`, `failed`).
-  - Structural metadata: `page_count` and generated `chunk_count`.
-  - Filesystem storage references: `storage_path` (original upload) and `processed_path` (parsed chunk JSON).
-  - Composite indexes: `ix_documents_user_created` for optimal user-filtered pagination.
-
----
-
-## 10. ChromaDB Role
-
-ChromaDB provides the embedded vector database for ad-hoc user-uploaded documents:
-- **Chunk Vector Storage:** Stores 384-dimensional BGE embeddings generated for each document chunk.
-- **Tenant Isolation:** Every vector is tagged with `user_id` and `document_id` in metadata. All queries apply mandatory `{"user_id": current_user_id}` filter predicates.
-- **Distance Metric:** HNSW index configured with cosine similarity (`"hnsw:space": "cosine"`).
-- **Document Deletion:** Coordinated cascade deletion ensuring that deleting a document in PostgreSQL simultaneously purges its vector embeddings from ChromaDB.
-
----
-
-## 11. Supported Uploaded File Types
-
-| Extension | Parser Engine | Extraction Strategy | Page Preservation |
-| :--- | :--- | :--- | :--- |
-| **`.pdf`** | `pypdf` | Page-by-page text stream extraction with layout whitespace preservation | Yes (Exact page index) |
-| **`.docx`** | `python-docx` | Paragraph and table-cell traversal | Approximate (Synthesized page blocks) |
-| **`.txt`** | Native UTF-8 / Latin-1 | Line and paragraph tokenization | Single / chunked virtual pages |
-| **`.eml`** | Python standard `email` | Header extraction (`From`, `To`, `Subject`, `Date`) + Multipart body decoding | Email thread structure |
-
----
-
-## 12. Dataset Information
-
-The static DocuMind corpus comprises **6,638 curated enterprise documents** partitioned into training, validation, and test splits:
-
-| Category | Source Dataset | Nature of Content | Volume |
-| :--- | :--- | :--- | :--- |
-| **Contracts** | CUAD (Contract Understanding Atticus Dataset) | Commercial agreements, NDA clauses, termination terms | 1,328 docs |
-| **Invoices** | Docile Benchmark Dataset | Industrial invoices, line items, gross totals, vendor names | 1,328 docs |
-| **Purchase Orders**| Docile Benchmark Dataset | Buyer orders, product codes, quantities, delivery terms | 1,328 docs |
-| **Emails** | Enron Email Corpus | Internal corporate correspondence, status updates | 1,328 docs |
-| **Reports** | SEC Edgar / Corporate Filings | Financial reviews, operational assessments, annual reports | 1,326 docs |
-
-Total corpus chunks: **223,234 passages** indexed across BM25 and dense embeddings.
-
----
-
-## 13. Model Architecture & Specifications
-
-| Model Role | Architecture | Parameters | Checkpoint / Base | Dimensionality |
-| :--- | :--- | :--- | :--- | :--- |
-| **Document Classifier** | DistilBERT | 66 Million | Fine-tuned on DocuMind 5-class corpus | 768 hidden |
-| **Dense Embedder** | BGE-small-en-v1.5 | 33 Million | `BAAI/bge-small-en-v1.5` | 384 dimensions |
-| **Lexical Search** | BM25s | Token index | Custom built sparse inverted index | Vocab: 42,000+ |
-| **Generative RAG** | Qwen2.5-1.5B-Instruct | 1.54 Billion | `Qwen/Qwen2.5-1.5B-Instruct` | 1536 hidden |
-
----
-
-## 14. Empirical Evaluation Results
-
-### Document Classification (DistilBERT)
-Evaluated on the held-out test split of 996 documents:
-- **Test Accuracy:** **99.70%** (993/996 correct)
-- **Validation Accuracy:** **99.80%**
-- **Macro F1 Score:** **0.9993**
-- **Per-Class Metrics:**
-  - *Contract:* Precision 1.00, Recall 1.00, F1 1.00
-  - *Email:* Precision 1.00, Recall 1.00, F1 1.00
-  - *Invoice:* Precision 0.99, Recall 1.00, F1 1.00
-  - *Purchase Order:* Precision 1.00, Recall 0.99, F1 1.00
-  - *Report:* Precision 1.00, Recall 1.00, F1 1.00
-
-### Hybrid Retrieval Performance (Recall@5)
-Evaluated across 100 enterprise benchmark queries comparing individual vs. fused retrieval:
-- **BM25 Lexical Alone:** Recall@5 = **0.88**
-- **BGE Semantic Alone:** Recall@5 = **0.84**
-- **RRF Hybrid Search:** Recall@5 = **0.92** *(+4.5% relative gain over BM25, +9.5% over pure vector search)*
-
----
-
-## 15. Local Setup & Prerequisites
-
-### Hardware & Operating System
-- **OS:** Windows 10/11, macOS, or Ubuntu 22.04+
-- **Memory:** 16 GB RAM recommended
-- **GPU (Optional):** NVIDIA GPU with CUDA 12+ (6GB+ VRAM recommended for fast Qwen generation; CPU fallback supported)
-
-### Software Requirements
-- **Python 3.12+** (with PyTorch and CUDA support)
-- **Node.js 18+** & **npm 9+**
-- **Docker & Docker Compose** (for PostgreSQL)
-
----
-
-## 16. Backend Startup
-
-### 1. Start PostgreSQL Database
-Using Docker Compose:
+### 1. Database Setup
+Start PostgreSQL using Docker Compose:
 ```bash
 docker-compose up -d
 ```
-Verify PostgreSQL is healthy:
-```bash
-docker ps
-```
 
-### 2. Configure Environment Variables
-Copy `.env.example` to `.env`:
+### 2. Backend Setup
+Activate your Python virtual environment and install dependencies:
 ```bash
+# Windows
+ml\.venv\Scripts\Activate.ps1
+
+# Linux / macOS
+source ml/.venv/bin/activate
+
 cd backend
-cp .env.example .env
+pip install -r requirements.txt
 ```
-Ensure `DATABASE_URL` matches your PostgreSQL credentials.
 
-### 3. Run Database Migrations
-Apply Alembic migrations to create tables:
+Apply database migrations:
 ```bash
 alembic upgrade head
 ```
 
-### 4. Start the FastAPI Server
-Activate your Python virtual environment:
-```powershell
-# Windows
-..\ml\.venv\Scripts\Activate.ps1
-
-# Linux / macOS
-source ../ml/.venv/bin/activate
-```
-Launch the server:
+Launch the FastAPI backend server:
 ```bash
-python -m uvicorn main:app --reload --host 127.0.0.1 --port 8000
+uvicorn main:app --reload --host 127.0.0.1 --port 8000
 ```
-Swagger interactive API docs will be available at `http://127.0.0.1:8000/docs`.
+API interactive documentation will be available at `http://127.0.0.1:8000/docs`.
 
----
-
-## 17. Frontend Startup
-
-### 1. Install Node Dependencies
-Open a separate terminal:
+### 3. Frontend Setup
+In a separate terminal:
 ```bash
 cd frontend
 npm install
-```
-
-### 2. Start Vite Development Server
-```bash
 npm run dev
 ```
 Open your browser at `http://localhost:5173`.
 
-### 3. Build for Production
-To validate or produce production static bundles:
+### 4. Running the Automated Evaluation Suite
+To execute the entire 6-component evaluation suite and regenerate all benchmark summaries:
 ```bash
-npm run build
+python evaluation/run_all_evaluations.py
 ```
 
 ---
 
-## 18. Environment Variables Reference
+## Technical Limitations
 
-| Variable | Default Value | Description |
-| :--- | :--- | :--- |
-| `DATABASE_URL` | `postgresql+psycopg://postgres:password@127.0.0.1:5432/documind` | SQLAlchemy database connection string |
-| `CHROMA_PATH` | `./storage/chroma` | Directory for persistent ChromaDB storage |
-| `DEV_USER_ID` | `dev_user_001` | Default tenant user identifier (MVP) |
-| `DEV_USER_EMAIL`| `developer@documind.local` | Default tenant user email address |
-| `HOST` | `127.0.0.1` | API bind address |
-| `PORT` | `8000` | API bind port |
-| `DEBUG` | `false` | Enable verbose debugging and stack traces |
-| `CORS_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | Allowed frontend origins |
-
----
-
-## 19. REST API Endpoints
-
-### Base URL: `http://127.0.0.1:8000`
-
-| Method | Path | Summary | Key Parameters |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/health` | Service health status | None |
-| `POST` | `/agent` | Autonomous multi-tool orchestration | `{"question": "string"}` |
-| `POST` | `/classify` | DistilBERT 5-class classification | `{"question": "string"}` |
-| `POST` | `/extract` | Invoice/PO financial metadata extraction | `{"question": "string"}` |
-| `POST` | `/search` | Hybrid BM25 + BGE RRF search | `{"question": "string", "top_k": 5}` |
-| `POST` | `/qa` | Grounded RAG QA on corpus | `{"question": "string"}` |
-| `POST` | `/documents/upload` | Ingest PDF, DOCX, TXT, or EML | Multipart `file` |
-| `GET` | `/documents` | List current user's uploaded files | None |
-| `GET` | `/documents/{id}` | Inspect document chunks and metadata | Path `id` |
-| `POST` | `/documents/{id}/qa`| Isolated QA against single document | `{"question": "string"}` |
-| `DELETE`| `/documents/{id}`| Purge document from DB, disk & ChromaDB | Path `id` |
-
-### Sample Payload: Autonomous Agent Request (`POST /agent`)
-
-**Request:**
-```json
-{
-  "question": "What type of document is invoice_0292, what is its total amount, and explain what services it billed for?"
-}
-```
-
-**Response:**
-```json
-{
-  "question": "What type of document is invoice_0292, what is its total amount, and explain what services it billed for?",
-  "tools_used": ["classification", "metadata", "rag_qa"],
-  "results": [
-    {
-      "status": "success",
-      "document_id": "invoice_0292",
-      "predicted_class": "Invoice",
-      "confidence": 0.9995,
-      "tool": "classification"
-    },
-    {
-      "status": "success",
-      "document_id": "invoice_0292",
-      "field": "amount_total_gross",
-      "value": "$325.00",
-      "tool": "metadata"
-    },
-    {
-      "status": "success",
-      "document_id": "invoice_0292",
-      "answer": "Invoice invoice_0292 bills for radio advertisement broadcasting with product code VOTEVETS KSSEN R60, detailing 13 spots at $25.00 each for a gross total of $325.00.",
-      "source_chunk": "invoice_0292_0",
-      "retrieval_score": 0.7463,
-      "tool": "rag_qa"
-    }
-  ],
-  "final_answer": "Document invoice_0292 is an Invoice (confidence 99.95%). The total amount billed is $325.00 for 13 radio broadcast advertisement spots."
-}
-```
-
----
-
-## 20. Example Agent Questions
-
-You can test the agent with these real queries demonstrating different reasoning pipelines:
-
-1. **Document Classification:**
-   - *"What category of document is contract_0041 and what is your confidence score?"*
-   - *"Classify doc_0088 and list class probabilities."*
-2. **Financial Metadata Extraction:**
-   - *"Extract the total gross amount and date for invoice_0292."*
-   - *"What is the total value indicated on purchase_order_0105?"*
-3. **Corpus Hybrid Search:**
-   - *"Search for agreements containing explicit indemnification and limitation of liability clauses."*
-   - *"Find invoices referencing server migration consulting services."*
-4. **Corpus RAG Question Answering:**
-   - *"What is the governing law and notice period specified in contract_0012?"*
-   - *"Explain the terms of payment outlined in invoice_0044."*
-5. **Uploaded Document QA:**
-   - *"Based on my uploaded resume, what machine learning frameworks has the candidate worked with?"*
-   - *"What are the service credit penalties defined in my uploaded CloudNet SLA?"*
-6. **Cross-System Comparison (`BOTH` Mode):**
-   - *"Compare the liability cap in contract_0012 from the corpus with the indemnity terms in my uploaded service agreement."*
-
----
-
-## 21. Screenshots & Interface Showcase
-
-```
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│ [DocuMind SaaS UI Preview]                                                             │
-│                                                                                        │
-│ ┌───────────────┐ ┌──────────────────────────────────────────────────────────────────┐ │
-│ │  NAVIGATION   │ │ Query: "What type of document is invoice_0292 and what is total?"│ │
-│ │  ───────────  │ └──────────────────────────────────────────────────────────────────┘ │
-│ │  • Agent View │                                                                      │
-│ │  • Documents  │ ┌─ Final Synthesized Answer ───────────────────────────────────────┐ │
-│ │  • Health OK  │ │ The document is an Invoice (99.9% confidence). Total: $325.00.   │ │
-│ │               │ └──────────────────────────────────────────────────────────────────┘ │
-│ │               │ ┌─ Agent Activity Trace ───────────────────────────────────────────┐ │
-│ │               │ │ [Classification Tool] DistilBERT -> Invoice (0.9995)             │ │
-│ │               │ │ [Metadata Tool]       Gross Total: $325.00                       │ │
-│ │               │ │ [RAG QA Tool]         Source: invoice_0292_0 (Cosine: 0.746)     │ │
-│ │               │ └──────────────────────────────────────────────────────────────────┘ │
-│ └───────────────┘                                                                      │
-└────────────────────────────────────────────────────────────────────────────────────────┘
-```
-- **Desktop First SaaS Layout:** High contrast dark header, slate body, rounded cards, and responsive sidebar.
-- **Visual Confidence Gauges:** Dynamically rendered progress indicators displaying exact classification probabilities.
-- **Chunk Source Highlighting:** Direct expandable view into verbatim source passages supporting every generated answer.
-
----
-
-## 22. Technical Limitations
-
-- **Image-Only Scanned PDFs:** The current ingestion parser relies on digital text stream extraction (`pypdf`). Image-only PDF scans without an embedded OCR layer require external optical character recognition preprocessing.
-- **Single-Node ChromaDB:** The current vector database runs in embedded local mode (`chromadb.PersistentClient`). For multi-node high-availability clustering, an external Chroma server or distributed vector engine is recommended.
-- **Hardware Concurrency:** Local execution of `Qwen2.5-1.5B-Instruct` utilizes PyTorch CUDA or CPU execution. Simultaneous multi-user generative requests queue sequentially on a single GPU.
-
----
-
-## 23. Future Roadmap
-
-- [ ] **Multimodal Visual Intelligence:** Integrate LayoutLMv3 and Qwen2-VL to directly process 2D spatial layouts and document images without text extraction dependencies.
-- [ ] **Native OCR Pipeline:** Embed Tesseract or PaddleOCR directly into `document_ingestion.py` for automated fallback when PDFs lack selectable text.
-- [ ] **Enterprise Authentication:** Implement OAuth2 / OIDC authentication with JWT bearer tokens for multi-tenant organizational teams.
-- [ ] **Asynchronous Task Queue:** Transition document ingestion to Celery or Redis Queue (RQ) for background parsing of multi-gigabyte document archives.
-- [ ] **Streaming Agent Responses:** Implement Server-Sent Events (SSE) or WebSockets for token-by-token streaming of Qwen generative answers in the UI.
+- **Image-Only Scanned PDFs:** The current document parser relies on digital text stream extraction (`pypdf`). Image-only PDF scans without an embedded OCR layer require external optical character recognition preprocessing.
+- **Embedded ChromaDB Scope:** The default vector store operates in embedded persistent mode (`chromadb.PersistentClient`). Enterprise multi-node high availability would benefit from an external Chroma server or distributed cluster.
+- **Local Generation Throughput:** Local autoregressive inference with `Qwen2.5-1.5B-Instruct` executes sequentially on single-GPU setups; enterprise production deployments can point to batched vLLM or Triton inference servers.
 
 ---
 

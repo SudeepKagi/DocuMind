@@ -1,0 +1,781 @@
+{
+  "benchmark": "retrieval_hybrid_search",
+  "corpus_chunks_evaluated": 223234,
+  "total_benchmark_queries": 15,
+  "systems_evaluated": [
+    "bm25_only",
+    "bge_semantic_only",
+    "hybrid_rrf"
+  ],
+  "summary_metrics": {
+    "bm25_only": {
+      "recall_at_1": 0.2667,
+      "recall_at_3": 0.6,
+      "recall_at_5": 0.6667,
+      "recall_at_10": 0.6667,
+      "mrr": 0.4356,
+      "ndcg_at_10": 0.4783,
+      "mean_latency_ms": 31.74
+    },
+    "bge_semantic_only": {
+      "recall_at_1": 0.3333,
+      "recall_at_3": 0.6,
+      "recall_at_5": 0.6667,
+      "recall_at_10": 0.6667,
+      "mrr": 0.4835,
+      "ndcg_at_10": 0.503,
+      "mean_latency_ms": 132.19
+    },
+    "hybrid_rrf": {
+      "recall_at_1": 0.2,
+      "recall_at_3": 0.5333,
+      "recall_at_5": 0.6,
+      "recall_at_10": 0.7333,
+      "mrr": 0.3956,
+      "ndcg_at_10": 0.4742,
+      "mean_latency_ms": 5.09
+    }
+  },
+  "per_query_results": [
+    {
+      "query_id": "ret_01",
+      "query": "AZUL-ATR Global Maintenance Master Agreement Clause 16.5 early termination fee",
+      "category": "exact_keyword",
+      "target_doc_ids": [
+        "contract_0086"
+      ],
+      "system_metrics": {
+        "bm25_only": {
+          "recall_1": 1.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 1.0,
+          "ndcg_10": 1.0,
+          "top_3_retrieved": [
+            "contract_0086",
+            "contract_0059"
+          ],
+          "hit": true
+        },
+        "bge_semantic_only": {
+          "recall_1": 1.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 1.0,
+          "ndcg_10": 1.0,
+          "top_3_retrieved": [
+            "contract_0086",
+            "contract_0059",
+            "report_0888"
+          ],
+          "hit": true
+        },
+        "hybrid_rrf": {
+          "recall_1": 1.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 1.0,
+          "ndcg_10": 1.0,
+          "top_3_retrieved": [
+            "contract_0086",
+            "contract_0059",
+            "report_0888"
+          ],
+          "hit": true
+        }
+      }
+    },
+    {
+      "query_id": "ret_02",
+      "query": "Neighborhood Research and Media RODANTHE NC VENDOR KGAB",
+      "category": "exact_keyword",
+      "target_doc_ids": [
+        "po_0000"
+      ],
+      "system_metrics": {
+        "bm25_only": {
+          "recall_1": 0.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 0.5,
+          "ndcg_10": 0.6309,
+          "top_3_retrieved": [
+            "po_0018",
+            "po_0000",
+            "invoice_1065"
+          ],
+          "hit": true
+        },
+        "bge_semantic_only": {
+          "recall_1": 0.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 0.5,
+          "ndcg_10": 0.6309,
+          "top_3_retrieved": [
+            "po_0018",
+            "po_0000",
+            "po_0094"
+          ],
+          "hit": true
+        },
+        "hybrid_rrf": {
+          "recall_1": 0.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 0.5,
+          "ndcg_10": 0.6309,
+          "top_3_retrieved": [
+            "po_0018",
+            "po_0000",
+            "po_0003"
+          ],
+          "hit": true
+        }
+      }
+    },
+    {
+      "query_id": "ret_03",
+      "query": "login pallen pw ke9davis High Speed Internet Access",
+      "category": "exact_keyword",
+      "target_doc_ids": [
+        "email_0002"
+      ],
+      "system_metrics": {
+        "bm25_only": {
+          "recall_1": 1.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 1.0,
+          "ndcg_10": 1.0,
+          "top_3_retrieved": [
+            "email_0002",
+            "email_0810",
+            "report_0939"
+          ],
+          "hit": true
+        },
+        "bge_semantic_only": {
+          "recall_1": 0.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 0.5,
+          "ndcg_10": 0.6309,
+          "top_3_retrieved": [
+            "email_0810",
+            "email_0002",
+            "email_1704"
+          ],
+          "hit": true
+        },
+        "hybrid_rrf": {
+          "recall_1": 1.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 1.0,
+          "ndcg_10": 1.0,
+          "top_3_retrieved": [
+            "email_0002",
+            "email_0810",
+            "report_0935"
+          ],
+          "hit": true
+        }
+      }
+    },
+    {
+      "query_id": "ret_04",
+      "query": "contracts with indemnification against third-party intellectual property infringement claims",
+      "category": "semantic_concept",
+      "target_doc_ids": [
+        "contract_0356",
+        "contract_0154"
+      ],
+      "system_metrics": {
+        "bm25_only": {
+          "recall_1": 0.0,
+          "recall_5": 0.0,
+          "recall_10": 0.0,
+          "mrr": 0.0,
+          "ndcg_10": 0.0,
+          "top_3_retrieved": [
+            "report_1387",
+            "report_1386",
+            "contract_0498"
+          ],
+          "hit": false
+        },
+        "bge_semantic_only": {
+          "recall_1": 0.0,
+          "recall_5": 0.0,
+          "recall_10": 0.0,
+          "mrr": 0.0,
+          "ndcg_10": 0.0,
+          "top_3_retrieved": [
+            "report_1380",
+            "report_0819",
+            "report_0820"
+          ],
+          "hit": false
+        },
+        "hybrid_rrf": {
+          "recall_1": 0.0,
+          "recall_5": 0.0,
+          "recall_10": 0.0,
+          "mrr": 0.0,
+          "ndcg_10": 0.0,
+          "top_3_retrieved": [
+            "report_1380",
+            "report_1129",
+            "report_0079"
+          ],
+          "hit": false
+        }
+      }
+    },
+    {
+      "query_id": "ret_05",
+      "query": "agreements specifying liquidated damages upon premature cancellation of franchise operations",
+      "category": "semantic_concept",
+      "target_doc_ids": [
+        "contract_0229"
+      ],
+      "system_metrics": {
+        "bm25_only": {
+          "recall_1": 0.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 0.5,
+          "ndcg_10": 0.6309,
+          "top_3_retrieved": [
+            "contract_0030",
+            "contract_0229",
+            "contract_0335"
+          ],
+          "hit": true
+        },
+        "bge_semantic_only": {
+          "recall_1": 0.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 0.5,
+          "ndcg_10": 0.6309,
+          "top_3_retrieved": [
+            "contract_0030",
+            "contract_0229",
+            "report_1729"
+          ],
+          "hit": true
+        },
+        "hybrid_rrf": {
+          "recall_1": 0.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 0.5,
+          "ndcg_10": 0.6309,
+          "top_3_retrieved": [
+            "contract_0030",
+            "contract_0229",
+            "contract_0335"
+          ],
+          "hit": true
+        }
+      }
+    },
+    {
+      "query_id": "ret_06",
+      "query": "service provider insolvency and bankruptcy triggers for contract termination",
+      "category": "semantic_concept",
+      "target_doc_ids": [
+        "contract_0154",
+        "contract_0112"
+      ],
+      "system_metrics": {
+        "bm25_only": {
+          "recall_1": 0.0,
+          "recall_5": 0.0,
+          "recall_10": 0.0,
+          "mrr": 0.0,
+          "ndcg_10": 0.0,
+          "top_3_retrieved": [
+            "report_1881",
+            "report_1878",
+            "report_1609"
+          ],
+          "hit": false
+        },
+        "bge_semantic_only": {
+          "recall_1": 0.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 0.2,
+          "ndcg_10": 0.2372,
+          "top_3_retrieved": [
+            "contract_0253",
+            "contract_0053",
+            "contract_0138"
+          ],
+          "hit": true
+        },
+        "hybrid_rrf": {
+          "recall_1": 0.0,
+          "recall_5": 0.0,
+          "recall_10": 0.0,
+          "mrr": 0.0909,
+          "ndcg_10": 0.0,
+          "top_3_retrieved": [
+            "contract_0253",
+            "contract_0094",
+            "report_1881"
+          ],
+          "hit": false
+        }
+      }
+    },
+    {
+      "query_id": "ret_07",
+      "query": "Which contracts mention early termination penalties and notice requirements?",
+      "category": "contract",
+      "target_doc_ids": [
+        "contract_0086",
+        "contract_0356",
+        "contract_0229",
+        "contract_0112"
+      ],
+      "system_metrics": {
+        "bm25_only": {
+          "recall_1": 0.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 0.2,
+          "ndcg_10": 0.151,
+          "top_3_retrieved": [
+            "report_1860",
+            "report_1861",
+            "report_1149"
+          ],
+          "hit": true
+        },
+        "bge_semantic_only": {
+          "recall_1": 0.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 0.5,
+          "ndcg_10": 0.4144,
+          "top_3_retrieved": [
+            "report_1319",
+            "contract_0086",
+            "report_0986"
+          ],
+          "hit": true
+        },
+        "hybrid_rrf": {
+          "recall_1": 0.0,
+          "recall_5": 0.0,
+          "recall_10": 1.0,
+          "mrr": 0.1667,
+          "ndcg_10": 0.3694,
+          "top_3_retrieved": [
+            "report_1319",
+            "contract_0175",
+            "report_1862"
+          ],
+          "hit": true
+        }
+      }
+    },
+    {
+      "query_id": "ret_08",
+      "query": "What are the governing law and arbitration procedures in contract_0086?",
+      "category": "contract",
+      "target_doc_ids": [
+        "contract_0086"
+      ],
+      "system_metrics": {
+        "bm25_only": {
+          "recall_1": 0.0,
+          "recall_5": 0.0,
+          "recall_10": 0.0,
+          "mrr": 0.0,
+          "ndcg_10": 0.0,
+          "top_3_retrieved": [
+            "report_1877",
+            "contract_0243",
+            "contract_0258"
+          ],
+          "hit": false
+        },
+        "bge_semantic_only": {
+          "recall_1": 1.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 1.0,
+          "ndcg_10": 1.0,
+          "top_3_retrieved": [
+            "contract_0086",
+            "report_1028",
+            "contract_0275"
+          ],
+          "hit": true
+        },
+        "hybrid_rrf": {
+          "recall_1": 0.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 0.3333,
+          "ndcg_10": 0.5,
+          "top_3_retrieved": [
+            "contract_0254",
+            "report_1877",
+            "contract_0086"
+          ],
+          "hit": true
+        }
+      }
+    },
+    {
+      "query_id": "ret_09",
+      "query": "advertising broadcast spot rates and payments to Eagle Radio of Great Bend",
+      "category": "invoice",
+      "target_doc_ids": [
+        "invoice_0292"
+      ],
+      "system_metrics": {
+        "bm25_only": {
+          "recall_1": 0.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 0.3333,
+          "ndcg_10": 0.5,
+          "top_3_retrieved": [
+            "contract_0137",
+            "invoice_1823",
+            "invoice_0292"
+          ],
+          "hit": true
+        },
+        "bge_semantic_only": {
+          "recall_1": 0.0,
+          "recall_5": 0.0,
+          "recall_10": 0.0,
+          "mrr": 0.0,
+          "ndcg_10": 0.0,
+          "top_3_retrieved": [
+            "invoice_1341",
+            "report_0938",
+            "invoice_1800"
+          ],
+          "hit": false
+        },
+        "hybrid_rrf": {
+          "recall_1": 0.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 0.2,
+          "ndcg_10": 0.3869,
+          "top_3_retrieved": [
+            "contract_0137",
+            "invoice_1341",
+            "invoice_1823"
+          ],
+          "hit": true
+        }
+      }
+    },
+    {
+      "query_id": "ret_10",
+      "query": "Invoice totals gross amount and payment terms due upon receipt",
+      "category": "invoice",
+      "target_doc_ids": [
+        "invoice_0292"
+      ],
+      "system_metrics": {
+        "bm25_only": {
+          "recall_1": 0.0,
+          "recall_5": 0.0,
+          "recall_10": 0.0,
+          "mrr": 0.0,
+          "ndcg_10": 0.0,
+          "top_3_retrieved": [
+            "invoice_1130",
+            "invoice_1046",
+            "invoice_1837"
+          ],
+          "hit": false
+        },
+        "bge_semantic_only": {
+          "recall_1": 0.0,
+          "recall_5": 0.0,
+          "recall_10": 0.0,
+          "mrr": 0.0,
+          "ndcg_10": 0.0,
+          "top_3_retrieved": [
+            "report_0310",
+            "report_1184",
+            "contract_0200"
+          ],
+          "hit": false
+        },
+        "hybrid_rrf": {
+          "recall_1": 0.0,
+          "recall_5": 0.0,
+          "recall_10": 0.0,
+          "mrr": 0.0,
+          "ndcg_10": 0.0,
+          "top_3_retrieved": [
+            "invoice_1130",
+            "report_0310",
+            "invoice_1046"
+          ],
+          "hit": false
+        }
+      }
+    },
+    {
+      "query_id": "ret_11",
+      "query": "business purchase requisition for Philip Morris with phone number 804-274-5214",
+      "category": "purchase_order",
+      "target_doc_ids": [
+        "po_0002"
+      ],
+      "system_metrics": {
+        "bm25_only": {
+          "recall_1": 1.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 1.0,
+          "ndcg_10": 1.0,
+          "top_3_retrieved": [
+            "po_0002",
+            "po_0100",
+            "po_0029"
+          ],
+          "hit": true
+        },
+        "bge_semantic_only": {
+          "recall_1": 0.0,
+          "recall_5": 0.0,
+          "recall_10": 0.0,
+          "mrr": 0.0526,
+          "ndcg_10": 0.0,
+          "top_3_retrieved": [
+            "po_0114",
+            "po_0037",
+            "po_0034"
+          ],
+          "hit": false
+        },
+        "hybrid_rrf": {
+          "recall_1": 0.0,
+          "recall_5": 0.0,
+          "recall_10": 1.0,
+          "mrr": 0.1429,
+          "ndcg_10": 0.3333,
+          "top_3_retrieved": [
+            "po_0034",
+            "po_0016",
+            "po_0037"
+          ],
+          "hit": true
+        }
+      }
+    },
+    {
+      "query_id": "ret_12",
+      "query": "purchase order sent to vendor KGAB by Neighborhood Research",
+      "category": "purchase_order",
+      "target_doc_ids": [
+        "po_0000"
+      ],
+      "system_metrics": {
+        "bm25_only": {
+          "recall_1": 0.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 0.5,
+          "ndcg_10": 0.6309,
+          "top_3_retrieved": [
+            "po_0018",
+            "po_0000",
+            "invoice_1065"
+          ],
+          "hit": true
+        },
+        "bge_semantic_only": {
+          "recall_1": 1.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 1.0,
+          "ndcg_10": 1.0,
+          "top_3_retrieved": [
+            "po_0000",
+            "po_0018",
+            "po_0031"
+          ],
+          "hit": true
+        },
+        "hybrid_rrf": {
+          "recall_1": 0.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 0.5,
+          "ndcg_10": 0.6309,
+          "top_3_retrieved": [
+            "po_0018",
+            "po_0000",
+            "po_0031"
+          ],
+          "hit": true
+        }
+      }
+    },
+    {
+      "query_id": "ret_13",
+      "query": "pallen@enron.com Mike Grigsby distribution list",
+      "category": "discrepancy_bm25_favored",
+      "target_doc_ids": [
+        "email_0001"
+      ],
+      "system_metrics": {
+        "bm25_only": {
+          "recall_1": 1.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 1.0,
+          "ndcg_10": 1.0,
+          "top_3_retrieved": [
+            "email_0001",
+            "email_1456",
+            "email_0800"
+          ],
+          "hit": true
+        },
+        "bge_semantic_only": {
+          "recall_1": 1.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 1.0,
+          "ndcg_10": 1.0,
+          "top_3_retrieved": [
+            "email_0001",
+            "email_0800",
+            "email_1456"
+          ],
+          "hit": true
+        },
+        "hybrid_rrf": {
+          "recall_1": 1.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 1.0,
+          "ndcg_10": 1.0,
+          "top_3_retrieved": [
+            "email_0001",
+            "email_1456",
+            "email_0800"
+          ],
+          "hit": true
+        }
+      }
+    },
+    {
+      "query_id": "ret_14",
+      "query": "protecting proprietary corporate secrets and non-disclosure obligations during business relationship",
+      "category": "discrepancy_bge_favored",
+      "target_doc_ids": [
+        "contract_0356",
+        "contract_0112"
+      ],
+      "system_metrics": {
+        "bm25_only": {
+          "recall_1": 0.0,
+          "recall_5": 0.0,
+          "recall_10": 0.0,
+          "mrr": 0.0,
+          "ndcg_10": 0.0,
+          "top_3_retrieved": [
+            "report_1547",
+            "report_1775",
+            "report_1190"
+          ],
+          "hit": false
+        },
+        "bge_semantic_only": {
+          "recall_1": 0.0,
+          "recall_5": 0.0,
+          "recall_10": 0.0,
+          "mrr": 0.0,
+          "ndcg_10": 0.0,
+          "top_3_retrieved": [
+            "report_1649",
+            "report_1650",
+            "report_1629"
+          ],
+          "hit": false
+        },
+        "hybrid_rrf": {
+          "recall_1": 0.0,
+          "recall_5": 0.0,
+          "recall_10": 0.0,
+          "mrr": 0.0,
+          "ndcg_10": 0.0,
+          "top_3_retrieved": [
+            "report_1331",
+            "report_1649",
+            "report_1547"
+          ],
+          "hit": false
+        }
+      }
+    },
+    {
+      "query_id": "ret_15",
+      "query": "Cardlytics Bank of America custom software licensing and source code delivery",
+      "category": "discrepancy_hybrid_favored",
+      "target_doc_ids": [
+        "contract_0154"
+      ],
+      "system_metrics": {
+        "bm25_only": {
+          "recall_1": 0.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 0.5,
+          "ndcg_10": 0.6309,
+          "top_3_retrieved": [
+            "contract_0184",
+            "contract_0154",
+            "contract_0118"
+          ],
+          "hit": true
+        },
+        "bge_semantic_only": {
+          "recall_1": 1.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 1.0,
+          "ndcg_10": 1.0,
+          "top_3_retrieved": [
+            "contract_0154",
+            "contract_0133",
+            "contract_0184"
+          ],
+          "hit": true
+        },
+        "hybrid_rrf": {
+          "recall_1": 0.0,
+          "recall_5": 1.0,
+          "recall_10": 1.0,
+          "mrr": 0.5,
+          "ndcg_10": 0.6309,
+          "top_3_retrieved": [
+            "contract_0184",
+            "contract_0154",
+            "contract_0118"
+          ],
+          "hit": true
+        }
+      }
+    }
+  ]
+}

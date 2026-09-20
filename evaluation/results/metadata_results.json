@@ -1,0 +1,76 @@
+{
+  "benchmark": "metadata_extraction",
+  "model": "LayoutLM Multi-Label Token Classifier + Spatial Extraction",
+  "checkpoint": "ml/models/layoutlm_multilabel/final",
+  "dataset": "DocILE Annotated Benchmark / invoice_field_quality.csv",
+  "total_documents_evaluated": 3850,
+  "total_field_instances_evaluated": 30823,
+  "evaluation_scope": {
+    "token_level_validation_macro_f1": 0.8746,
+    "field_level_evaluation": {
+      "exact_match_rate": 0.7691,
+      "mean_character_similarity": 0.9769,
+      "success_rate_at_80_threshold": 0.9701,
+      "macro_token_f1": 0.914
+    }
+  },
+  "per_field_metrics": {
+    "vendor_name": {
+      "evaluated_instances": 5140,
+      "exact_match_accuracy": 0.8043,
+      "mean_similarity": 0.9862,
+      "success_rate_80": 0.9862,
+      "token_f1": 0.9175,
+      "decision_threshold": 0.95
+    },
+    "vendor_address": {
+      "evaluated_instances": 5285,
+      "exact_match_accuracy": 0.4976,
+      "mean_similarity": 0.9692,
+      "success_rate_80": 0.9565,
+      "token_f1": 0.8932,
+      "decision_threshold": 0.9
+    },
+    "customer_billing_name": {
+      "evaluated_instances": 4081,
+      "exact_match_accuracy": 0.8317,
+      "mean_similarity": 0.9894,
+      "success_rate_80": 0.989,
+      "token_f1": 0.9353,
+      "decision_threshold": 0.95
+    },
+    "customer_billing_address": {
+      "evaluated_instances": 3706,
+      "exact_match_accuracy": 0.589,
+      "mean_similarity": 0.983,
+      "success_rate_80": 0.9784,
+      "token_f1": 0.9296,
+      "decision_threshold": 0.9
+    },
+    "date_issue": {
+      "evaluated_instances": 4431,
+      "exact_match_accuracy": 0.9068,
+      "mean_similarity": 0.9849,
+      "success_rate_80": 0.9797,
+      "token_f1": 0.9291,
+      "decision_threshold": 0.95
+    },
+    "amount_total_gross": {
+      "evaluated_instances": 3910,
+      "exact_match_accuracy": 0.8918,
+      "mean_similarity": 0.9586,
+      "success_rate_80": 0.9448,
+      "token_f1": 0.8926,
+      "decision_threshold": 0.9
+    },
+    "amount_due": {
+      "evaluated_instances": 4270,
+      "exact_match_accuracy": 0.9037,
+      "mean_similarity": 0.967,
+      "success_rate_80": 0.9557,
+      "token_f1": 0.9052,
+      "decision_threshold": 0.95
+    }
+  },
+  "elapsed_time_seconds": 8.558
+}

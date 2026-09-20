@@ -1,0 +1,169 @@
+{
+  "benchmark": "uploaded_document_rag",
+  "vector_store": "ChromaDB (cosine similarity index)",
+  "embedding_model": "BAAI/bge-small-en-v1.5",
+  "llm_model": "Qwen/Qwen2.5-1.5B-Instruct",
+  "total_queries_evaluated": 8,
+  "supported_file_types_tested": [
+    "PDF",
+    "DOCX",
+    "TXT",
+    "EML"
+  ],
+  "metrics": {
+    "retrieval_recall_at_5": 1.0,
+    "source_correctness_accuracy": 1.0,
+    "mean_token_f1": 0.3001,
+    "mean_keyword_grounding_recall": 0.875,
+    "mean_total_latency_ms": 16480.2
+  },
+  "query_results": [
+    {
+      "id": "up_01",
+      "question": "What qualifications are required in the Northstar AI Software Engineering Internship JD?",
+      "file_type": "PDF",
+      "query_scope": "single_document",
+      "target_doc_ids": [
+        "doc_94520dc7"
+      ],
+      "generated_answer": "The required qualifications for the Northstar AI Software Engineering Internship include:\n\n- Strong programming fundamentals in Java or Python\n- Data structures and algorithms\n- REST APIs and backend development\n- SQL and relational databases\n- Git and GitHub\n- Basic understanding of machine learning or NLP\n- Ability to debug, test, and document software\n- Experience with React or another modern frontend framework is preferred\n- Experience with Docker and containerized development is preferred\n- Experience with vector databases or semantic search is preferred\n- Experience with retrieval-augmented generation (RAG) is preferred\n- Cloud deployment fundamentals are preferred\n- Preferred skills include knowledge of natural language processing (NLP), machine learning, and deep learning\n- Preferred skills also include experience",
+      "expected_answer": "Requires strong foundations in Python, algorithms, data structures, and enthusiasm for AI/ML platform engineering.",
+      "retrieval_hit": true,
+      "source_correct": true,
+      "token_f1": 0.1525,
+      "keyword_recall": 0.8,
+      "retrieval_latency_ms": 356.1,
+      "generation_latency_ms": 23080.3,
+      "total_latency_ms": 23436.4
+    },
+    {
+      "id": "up_02",
+      "question": "What security certifications and compliance frameworks are documented in CloudNet Security Assessment?",
+      "file_type": "DOCX",
+      "query_scope": "single_document",
+      "target_doc_ids": [
+        "doc_21dec666"
+      ],
+      "generated_answer": "The CloudNet Security Assessment document lists several security certifications and compliance frameworks:\n\n1. **ISO 27001:2022** - This is listed as a current certification held by CloudNet, which is valid until December 2027. It ensures the organization has implemented appropriate controls to protect assets and confidentiality.\n\n2. **SOC 2 Type II Audit** - An independent audit conducted in January 2026 found no material deficiencies. The SOC 2 Type II audit provides assurance regarding the design and operation of CloudNet's internal control environment, including its security, technology, and ethics controls.\n\nThese certifications and audits demonstrate CloudNet's commitment to maintaining robust security measures and adhering to industry standards and regulatory requirements",
+      "expected_answer": "Documents enterprise security assessment, compliance frameworks, encryption standards, and certification controls.",
+      "retrieval_hit": true,
+      "source_correct": true,
+      "token_f1": 0.1441,
+      "keyword_recall": 1.0,
+      "retrieval_latency_ms": 54.51,
+      "generation_latency_ms": 23902.99,
+      "total_latency_ms": 23957.5
+    },
+    {
+      "id": "up_03",
+      "question": "What is the total amount due, vendor, and payment terms in the server hardware PO-9981 email?",
+      "file_type": "EML",
+      "query_scope": "single_document",
+      "target_doc_ids": [
+        "doc_4ca5a3b1"
+      ],
+      "generated_answer": "The total amount due for server hardware PO-9981 is $900.00 USD. The vendor is Enterprise Compute Solutions LLC. Payment terms are Net 30 with delivery expected by October 5, 2026. \n\nNote: Invoice number INV-88219 is mentioned but not included in the answer. It seems there might be a typo or missing information in the original message. However, based on the available evidence, these details can be extracted. If more context is needed, please provide additional information.",
+      "expected_answer": "Total amount due is $14,900.00 USD, vendor is Enterprise Compute Solutions LLC, payment terms are Net 30 for 4x Dell PowerEdge R760 servers.",
+      "retrieval_hit": true,
+      "source_correct": true,
+      "token_f1": 0.3656,
+      "keyword_recall": 0.6,
+      "retrieval_latency_ms": 60.27,
+      "generation_latency_ms": 17367.4,
+      "total_latency_ms": 17427.67
+    },
+    {
+      "id": "up_04",
+      "question": "What was the root cause and resolution of incident INC-2026-0915 in the incident report?",
+      "file_type": "TXT",
+      "query_scope": "single_document",
+      "target_doc_ids": [
+        "doc_771891a2"
+      ],
+      "generated_answer": "The root cause of the incident was disk I/O saturation on the HNSW index cache after an automated cluster snapshot creation. The resolution involved replacing the snapshot cron schedule to run during off-peak hours (02:00 UTC) and provisioning a 5000 IOPS NVMe SSD volume. Additionally, action items included completing memory pinning for high-frequency vector collections and enabling automated alerting at an 80% IOPS threshold.",
+      "expected_answer": "Root cause was disk I/O saturation on HNSW index cache during snapshots. Resolved by rescheduling to 02:00 UTC and provisioning 5000 IOPS NVMe SSD volume.",
+      "retrieval_hit": true,
+      "source_correct": true,
+      "token_f1": 0.5185,
+      "keyword_recall": 1.0,
+      "retrieval_latency_ms": 46.81,
+      "generation_latency_ms": 13787.09,
+      "total_latency_ms": 13833.91
+    },
+    {
+      "id": "up_05",
+      "question": "What contact email and location are listed on Alex Mehta's resume?",
+      "file_type": "PDF",
+      "query_scope": "single_document",
+      "target_doc_ids": [
+        "doc_eb076b64"
+      ],
+      "generated_answer": "The contact email listed on Alex Mehta's resume is alex.mehta.demo@example.com, and his location is Bengaluru, India. The summary section also mentions he has hands-on experience building full-stack web applications and AI-assisted developer tools.",
+      "expected_answer": "Contact email is alex.mehta.demo@example.com located in Bengaluru, India.",
+      "retrieval_hit": true,
+      "source_correct": true,
+      "token_f1": 0.3077,
+      "keyword_recall": 1.0,
+      "retrieval_latency_ms": 49.7,
+      "generation_latency_ms": 8095.72,
+      "total_latency_ms": 8145.42
+    },
+    {
+      "id": "up_06",
+      "question": "Compare Alex Mehta's resume skills with the Northstar AI software engineering internship requirements.",
+      "file_type": "PDF",
+      "query_scope": "multi_document_comparison",
+      "target_doc_ids": [
+        "doc_94520dc7",
+        "doc_eb076b64"
+      ],
+      "generated_answer": "Alex Mehta has extensive experience in software engineering, particularly in building full-stack web applications and AI-assisted developer tools. His skills include proficiency in languages like Java, C, Python, SQL; knowledge of web technologies such as React, JavaScript, HTML, CSS, Node.js, Express; databases including MongoDB, PostgreSQL; and AI/ML tools like transformers, Hugging Face, RAG, embeddings, semantic search, prompt engineering. He also possesses technical skills in Git, GitHub, Docker, Postman, VS Code, and has developed projects like DocuMind, PushDoc, and Stayora.\n\nThe Northstar AI software engineering internship JD lists preferred skills such as React or another modern frontend framework, Docker and containerized development, vector databases or",
+      "expected_answer": "Alex demonstrates software engineering and ML coursework aligned with Northstar AI platform engineering requirements.",
+      "retrieval_hit": true,
+      "source_correct": true,
+      "token_f1": 0.1197,
+      "keyword_recall": 1.0,
+      "retrieval_latency_ms": 59.25,
+      "generation_latency_ms": 21492.99,
+      "total_latency_ms": 21552.24
+    },
+    {
+      "id": "up_07",
+      "question": "Compare candidate Sudeep Kagi's demonstrated background with the OpenText developer role requirements.",
+      "file_type": "PDF",
+      "query_scope": "multi_document_comparison",
+      "target_doc_ids": [
+        "doc_bd713dba",
+        "doc_25b5c168"
+      ],
+      "generated_answer": "Sudeep Kagi has a Bachelor's degree in Electronics and Communication Engineering (Circuit Branch) and is currently pursuing his final year studies. He possesses extensive hands-on experience in full-stack development, particularly with JavaScript, React.js, Node.js, Express.js, PostgreSQL, and MongoDB. His professional summary highlights his ability to architect, build, and debug high-performance, secure, and scalable production systems, including a 4-role distributed exam-proctoring platform and an automation-driven GitHub documentation app. Additionally, he has led a national-level hackathon team to a Runner-Up finish, demonstrating leadership and commitment to delivering results under pressure. \n\nThe OpenText developer role requires expertise in artificial intelligence, machine learning, data science, and generative AI.",
+      "expected_answer": "Candidate demonstrates enterprise systems engineering and document processing matching OpenText AI/ML developer competencies.",
+      "retrieval_hit": true,
+      "source_correct": true,
+      "token_f1": 0.0901,
+      "keyword_recall": 0.6,
+      "retrieval_latency_ms": 41.6,
+      "generation_latency_ms": 19336.73,
+      "total_latency_ms": 19378.33
+    },
+    {
+      "id": "up_08",
+      "question": "Identify which vendor provided the server hardware in the approval email and which vendor was audited in the security assessment.",
+      "file_type": "EML + DOCX",
+      "query_scope": "multi_document",
+      "target_doc_ids": [
+        "doc_4ca5a3b1",
+        "doc_21dec666"
+      ],
+      "generated_answer": "The server hardware in the approval email was provided by Enterprise Compute Solutions LLC. The vendor that was audited in the security assessment was CloudNet.",
+      "expected_answer": "Enterprise Compute Solutions LLC provided the servers in the email, while CloudNet was the vendor evaluated in the security assessment.",
+      "retrieval_hit": true,
+      "source_correct": true,
+      "token_f1": 0.7027,
+      "keyword_recall": 1.0,
+      "retrieval_latency_ms": 65.83,
+      "generation_latency_ms": 4044.32,
+      "total_latency_ms": 4110.15
+    }
+  ]
+}

@@ -88,3 +88,10 @@ desktop.ini
 scratch/
 tmp/
 temp/
+
+# Evaluation Caches & Large Generated Artifacts
+evaluation/**/__pycache__/
+evaluation/**/.cache/
+evaluation/results/*.tmp
+evaluation/results/*.log
+

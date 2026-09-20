@@ -1,0 +1,90 @@
+{
+  "title": "DocuMind Enterprise Document Intelligence Evaluation Matrix",
+  "timestamp": "2026-09-20T12:59:49.880227+00:00",
+  "components": {
+    "classification": {
+      "model": "DistilBERT",
+      "dataset": "ml/processed/test.csv (996 samples)",
+      "accuracy": 0.999,
+      "macro_f1": 0.9993,
+      "weighted_f1": 0.999,
+      "baseline_accuracy": 0.997,
+      "baseline_macro_f1": 0.992,
+      "accuracy_delta": 0.002
+    },
+    "metadata_extraction": {
+      "model": "LayoutLM Multi-Label + Heuristics",
+      "dataset": "DocILE Annotated Invoices",
+      "total_instances_evaluated": 30823,
+      "token_level_validation_macro_f1": 0.8746,
+      "field_exact_match_rate": 0.7691,
+      "field_mean_similarity": 0.9769,
+      "field_success_rate_80": 0.9701
+    },
+    "retrieval": {
+      "corpus_chunks": 223234,
+      "total_queries": 15,
+      "bm25_only": {
+        "recall_at_1": 0.2667,
+        "recall_at_3": 0.6,
+        "recall_at_5": 0.6667,
+        "recall_at_10": 0.6667,
+        "mrr": 0.4356,
+        "ndcg_at_10": 0.4783,
+        "mean_latency_ms": 31.74
+      },
+      "bge_semantic_only": {
+        "recall_at_1": 0.3333,
+        "recall_at_3": 0.6,
+        "recall_at_5": 0.6667,
+        "recall_at_10": 0.6667,
+        "mrr": 0.4835,
+        "ndcg_at_10": 0.503,
+        "mean_latency_ms": 132.19
+      },
+      "hybrid_rrf": {
+        "recall_at_1": 0.2,
+        "recall_at_3": 0.5333,
+        "recall_at_5": 0.6,
+        "recall_at_10": 0.7333,
+        "mrr": 0.3956,
+        "ndcg_at_10": 0.4742,
+        "mean_latency_ms": 5.09
+      }
+    },
+    "rag_qa": {
+      "model": "Qwen2.5-1.5B-Instruct",
+      "total_questions": 14,
+      "retrieval_hit_rate": 1.0,
+      "citation_grounding_accuracy": 0.0,
+      "mean_token_f1": 0.2855,
+      "exact_match_rate": 0.0,
+      "hallucination_rate": 0.0,
+      "mean_latency_ms": 18255.06
+    },
+    "agent_tool_routing": {
+      "planner": "Rule-Based Intent Classifier & Multi-Tool Orchestrator",
+      "total_queries": 20,
+      "tool_selection_accuracy": 0.7,
+      "single_tool_accuracy": 0.75,
+      "multi_tool_accuracy": 0.5,
+      "unnecessary_tool_call_rate": 0.2,
+      "mean_latency_ms": 0.019
+    },
+    "uploaded_rag": {
+      "vector_store": "ChromaDB (Local)",
+      "supported_types_tested": [
+        "PDF",
+        "DOCX",
+        "TXT",
+        "EML"
+      ],
+      "retrieval_recall_at_5": 1.0,
+      "source_correctness_accuracy": 1.0,
+      "mean_token_f1": 0.3001,
+      "mean_keyword_grounding_recall": 0.875,
+      "mean_latency_ms": 16480.2
+    }
+  },
+  "completed_at": "2026-09-20T13:09:06.836798+00:00"
+}

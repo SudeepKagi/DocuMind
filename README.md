@@ -98,6 +98,92 @@ The architecture explicitly differentiates between document classification categ
 
 ---
 
+## Training Datasets & Model Fine-Tuning
+
+DocuMind combines task-specific fine-tuned deep learning models with dense retrieval encoders and instruction-tuned generative LLMs. To avoid synthetic bias and ensure enterprise realism, the models were trained and calibrated on standardized, publicly accessible enterprise document benchmarks.
+
+### Source Datasets & Provenance
+
+The unified corpus comprises **6,638 curated enterprise documents** sourced from established public research datasets:
+
+| Document Class | Source Dataset | Provider / Repository | Corpus Count | Modality & Description |
+| :--- | :--- | :--- | :--- | :--- |
+| **Contract** | [CUAD v1](https://huggingface.co/datasets/theatticusproject/cuad) (Contract Understanding Atticus Dataset) | The Atticus Project / Hugging Face (`theatticusproject/cuad`) | 510 documents | Full-text commercial agreements, NDAs, joint ventures, licensing, and services agreements filed with the U.S. SEC. |
+| **Email** | [Enron Email Dataset](https://huggingface.co/datasets/corbt/enron-emails) | FERC Archive / Hugging Face (`corbt/enron-emails`) | 2,000 documents | Real-world corporate email communications filtered to $\ge 200$ characters, preserving header metadata (`Subject`, `From`, `To`, `Date`) and message bodies. |
+| **Invoice** | [DocILE Benchmark](https://docile.rossum.ai/) | Rossum AI / AWS S3 Repository (`annotated-trainval`) + [Google OCR Invoices](https://huggingface.co/datasets/amaye15/invoices-google-ocr) | 2,000 documents | Real-world semi-structured business invoices with token-level OCR, word-level 2D bounding boxes, line items, and layout structures. |
+| **Purchase Order** | [DocILE Benchmark](https://docile.rossum.ai/) | Rossum AI / AWS S3 Repository (`annotated-trainval`) | 128 documents | Annotated procurement orders and purchase requisitions with itemized procurement headers, quantities, and totals. |
+| **Report** | [LEDGER Corpus](https://huggingface.co/datasets/artefactory/ledger-long-context-multi-kpi) | Artefactory / Hugging Face (`artefactory/ledger-long-context-multi-kpi`) | 2,000 documents | Long-context corporate annual reports, SEC 10-K/10-Q regulatory filings, auditor reviews, and multi-KPI balance sheets (`mmd_text`). |
+
+#### Corpus Splitting & Indexing Strategy
+
+1. **Document-Level Stratified Splits:**
+   The 6,638 documents were split into training, validation, and testing sets using stratified sampling (`random_state=42`) to preserve exact class proportions:
+   - **Training Set (70%):** 4,646 documents (1,400 Reports, 1,400 Emails, 1,400 Invoices, 357 Contracts, 89 Purchase Orders).
+   - **Validation Set (15%):** 996 documents (300 Reports, 300 Emails, 300 Invoices, 76 Contracts, 20 Purchase Orders).
+   - **Test Set (15%):** 996 documents (300 Reports, 300 Emails, 300 Invoices, 77 Contracts, 19 Purchase Orders).
+2. **Corpus Passage Chunking:**
+   The full corpus was recursively chunked into **223,234 passages** using a 512-token window with 64-token overlap, forming the pre-indexed knowledge base for dense and sparse search.
+
+---
+
+### Model Fine-Tuning & Training Methodologies
+
+```
++----------------------------------------------------------------------------------------------------+
+|                                    DOCUMIND MODEL SUITE                                            |
++------------------------------------+-----------------------------------+---------------------------+
+| DistilBERT Classifier              | LayoutLM Spatial Extractor        | BGE + BM25S + Qwen2.5     |
+| - Base: distilbert-base-uncased    | - Base: microsoft/layoutlm-base   | - Dense: bge-small-en-v1.5|
+| - Task: 5-class document routing   | - Task: 7-field token extraction  | - Sparse: BM25S lexical   |
+| - Sliding window (stride=128)      | - 2D bounding box coords [0, 1000]| - LLM: Qwen2.5-1.5B RAG   |
+| - 99.90% Acc / 99.93% Macro F1     | - 97.01% Success Rate @ 0.80      | - 100% Retrieval Hit Rate |
++------------------------------------+-----------------------------------+---------------------------+
+```
+
+#### 1. Document Classifier: DistilBERT (`distilbert-base-uncased`)
+- **Base Architecture:** `distilbert-base-uncased` (66M parameters, 6 transformer layers, 768 hidden dimension).
+- **Text Normalization:** Documents undergo automated cleaning (`clean_model_text`) that strips HTML tags (`<[^>]+>`), markdown image embeds (`!\[[^\]]*\]\([^)]*\)`), and OCR page split artifacts (`<--- Page Split --->`), followed by whitespace normalization and a truncation threshold of 8,000 characters.
+- **Sliding-Window Chunking:** To handle long multi-page documents without truncating critical context, training and inference utilize a 512-token sliding window with an overlap `stride=128` (`return_overflowing_tokens=True`). This generated **7,142 training chunks** from the 4,646 training documents.
+- **Training Hyperparameters:**
+  - **Optimizer:** AdamW with initial learning rate $\eta = 2 \times 10^{-5}$, weight decay $\lambda = 0.01$.
+  - **Batch Size & Gradient Accumulation:** Per-device train batch size of 8 with `gradient_accumulation_steps=2` (effective batch size of 16).
+  - **Epochs & Early Stopping:** Maximum 4 epochs with `EarlyStoppingCallback(early_stopping_patience=1)` monitoring validation `eval_macro_f1`. The optimal model checkpoint was achieved at **step 1788**.
+  - **Precision:** Mixed-precision FP16 enabled.
+- **Inference & Chunk Logit Pooling:** During inference, class logits across all sliding chunks belonging to a document are pooled via arithmetic mean (`groupby("document_id").mean()`). This approach achieved **99.90% Accuracy** (995 / 996 correct) and **99.93% Macro F1** on the held-out test split.
+
+#### 2. Spatial Metadata Extractor: LayoutLM (`microsoft/layoutlm-base-uncased`)
+- **Base Architecture:** `microsoft/layoutlm-base-uncased` (113M parameters), incorporating 2D spatial coordinate embeddings alongside textual token embeddings.
+- **Target Extraction Fields:** 7 core business metadata entities:
+  - `vendor_name`
+  - `vendor_address`
+  - `customer_billing_name`
+  - `customer_billing_address`
+  - `date_issue`
+  - `amount_total_gross`
+  - `amount_due`
+- **Training Data & Coordinate Normalization:** Trained on **3,850 annotated invoices** from the DocILE benchmark (2,695 train, 577 validation, 578 test). Token coordinates $[x_0, y_0, x_1, y_1]$ were extracted from OCR bounding boxes and normalized to a $[0, 1000]$ integer grid.
+- **Training Hyperparameters:**
+  - **Task:** Token-level sequence labeling (BIO tagging scheme: `B-FIELD`, `I-FIELD`, `O`).
+  - **Optimizer & Schedule:** AdamW, learning rate $2 \times 10^{-5}$, 2 epochs, per-device batch size 8, FP16 enabled. Best model checkpoint saved at **step 1281**.
+- **Post-Processing Pipeline:** Model token predictions are aggregated into entity spans and passed through deterministic regex and spatial heuristics to guarantee ISO date normalization (`YYYY-MM-DD`) and clean monetary float formatting.
+
+#### 3. Dense Semantic Retrieval: BGE Small (`BAAI/bge-small-en-v1.5`)
+- **Base Architecture:** 33M parameter dense bi-encoder generating normalized 384-dimensional dense vectors.
+- **Pre-computed Knowledge Index:** The entire 223,234 passage corpus was batch-encoded with L2 normalization and persisted as `full_text_embeddings.npy` (327 MB).
+- **Dynamic Upload Index:** For uploaded user documents (`.pdf`, `.docx`, `.txt`, `.eml`), the service dynamically generates BGE embeddings on the fly and inserts them into an isolated ChromaDB collection partitioned by `user_id` with cosine distance indexing.
+
+#### 4. Sparse Lexical Search: BM25S (`full_text_bm25s`)
+- **Implementation:** Rust-accelerated BM25S sparse inverted index computed across all 223,234 tokenized corpus passages.
+- **Rank Fusion:** Lexical BM25S rankings and dense BGE cosine similarity rankings are combined using Reciprocal Rank Fusion (RRF, $k=60$):
+  $$RRF(d) = \sum_{m \in \{BM25S, BGE\}} \frac{1}{k + r_m(d)}$$
+  delivering higher retrieval recall (**73.33% Recall@10**) than either retriever operating in isolation (**66.67%**).
+
+#### 5. Grounded RAG Generation: Qwen2.5 (`Qwen/Qwen2.5-1.5B-Instruct`)
+- **Base Architecture:** 1.54B parameter autoregressive instruction-tuned model.
+- **Context Grounding:** The model is conditioned with top-$K$ hybrid retrieved passages using a structured prompt format. Strict instructions require the model to synthesize answers strictly from provided context blocks and attach bracketed citations (`[doc_id]`). In local benchmark evaluations across 14 enterprise queries, the pipeline achieved a **100.00% Retrieval Hit Rate** and **0.00% Hallucination Rate**.
+
+---
+
 ## Evaluation & Benchmarks
 
 DocuMind includes a fully automated, reproducible evaluation framework that executes against local model checkpoints, processed datasets, and vector indexes without cloud API dependencies.

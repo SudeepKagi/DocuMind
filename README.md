@@ -124,21 +124,29 @@ The unified corpus comprises **6,638 curated enterprise documents** sourced from
 2. **Corpus Passage Chunking:**
    The full corpus was recursively chunked into **223,234 passages** using a 512-token window with 64-token overlap, forming the pre-indexed knowledge base for dense and sparse search.
 
+#### Benchmark Resources & Evaluation Splits
+
+| Resource | Used for | Details |
+| :--- | :--- | :--- |
+| **DocuMind Enterprise Document Corpus** | Document classification, search, RAG | **6,638 documents** across 5 classes: Email 2,000; Invoice 2,000; Report 2,000; Contract 510; Purchase Order 128. |
+| **Classification train/test split** | DistilBERT evaluation | Held-out test set contains **996 documents** across the 5 classes. |
+| **DocILE** | Invoice metadata extraction | Used for invoice document annotations and field extraction. Evaluation used **3,850 documents / 30,823 field instances** across 7 target fields. |
+| **Custom retrieval benchmark** | Search evaluation | 15 curated enterprise queries with verified relevant document IDs. |
+| **Custom RAG benchmark** | QA evaluation | 14 enterprise questions covering factual, explanation, calculation, definition, multi-hop, and enumeration tasks. |
+| **Custom agent benchmark** | Agent routing evaluation | 20 representative enterprise queries/workflows. |
+| **Uploaded-document benchmark** | ChromaDB RAG | 8 test cases covering PDF, DOCX, TXT and EML. |
+
 ---
 
 ### Model Fine-Tuning & Training Methodologies
 
-```
-+----------------------------------------------------------------------------------------------------+
-|                                    DOCUMIND MODEL SUITE                                            |
-+------------------------------------+-----------------------------------+---------------------------+
-| DistilBERT Classifier              | LayoutLM Spatial Extractor        | BGE + BM25S + Qwen2.5     |
-| - Base: distilbert-base-uncased    | - Base: microsoft/layoutlm-base   | - Dense: bge-small-en-v1.5|
-| - Task: 5-class document routing   | - Task: 7-field token extraction  | - Sparse: BM25S lexical   |
-| - Sliding window (stride=128)      | - 2D bounding box coords [0, 1000]| - LLM: Qwen2.5-1.5B RAG   |
-| - 99.90% Acc / 99.93% Macro F1     | - 97.01% Success Rate @ 0.80      | - 100% Retrieval Hit Rate |
-+------------------------------------+-----------------------------------+---------------------------+
-```
+| Model | Purpose |
+| :--- | :--- |
+| **DistilBERT — `distilbert-base-uncased`** | Fine-tuned document classification into Email, Contract, Invoice, Purchase Order and Report. The final checkpoint is `ml/models/distilbert_doc_classifier/final`. |
+| **LayoutLM** | Layout-aware invoice metadata extraction from document text + layout information. Final model: `ml/models/layoutlm_multilabel/final`. |
+| **BGE-small-en-v1.5 — `BAAI/bge-small-en-v1.5`** | Dense semantic embeddings for retrieval. Produces **384-dimensional embeddings**. |
+| **Qwen2.5-1.5B-Instruct** | Grounded RAG answer generation and uploaded-document QA. |
+| **TF-IDF + Logistic Regression** | Classical baseline used to compare against DistilBERT. |
 
 #### 1. Document Classifier: DistilBERT (`distilbert-base-uncased`)
 - **Base Architecture:** `distilbert-base-uncased` (66M parameters, 6 transformer layers, 768 hidden dimension).

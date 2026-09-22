@@ -1,47 +1,36 @@
 import React from "react";
 
-export default function Header({ onToggleMobile }) {
+export default function Header({ backendOnline, docCount = 0 }) {
   return (
-    <header className="topbar">
-      <div className="topbar-row">
-        <button
-          className="mobile-menu-btn"
-          onClick={onToggleMobile}
-          aria-label="Toggle navigation menu"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-        </button>
+    <header className="site-header">
+      <div className="header-container">
+        <div className="header-brand">
+          <div className="brand-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
+              <rect width="18" height="18" x="3" y="3" rx="4" />
+              <path d="m9 12 2 2 4-4" />
+            </svg>
+          </div>
+          <div className="brand-text">
+            <span className="brand-name">DocuMind</span>
+            <span className="brand-badge">Enterprise AI</span>
+          </div>
+        </div>
 
-        <div>
-          <p className="eyebrow">ENTERPRISE DOCUMENT INTELLIGENCE</p>
-          <h1>Ask your documents.</h1>
-          <p className="subtitle">
-            Autonomous multi-tool intelligence providing document classification,
-            financial metadata extraction, hybrid lexical/semantic search, and grounded AI answers.
-          </p>
-        </div>
-      </div>
+        <div className="header-meta">
+          {docCount > 0 && (
+            <div className="meta-stat-pill" title={`${docCount} documents indexed in ChromaDB`}>
+              <span className="stat-num">{docCount}</span>
+              <span className="stat-label">{docCount === 1 ? "document" : "documents"}</span>
+            </div>
+          )}
 
-      <div className="capability-pills">
-        <div className="cap-pill">
-          <span className="pill-dot"></span>
-          <span>Classification (DistilBERT)</span>
-        </div>
-        <div className="cap-pill">
-          <span className="pill-dot"></span>
-          <span>Metadata Extraction</span>
-        </div>
-        <div className="cap-pill">
-          <span className="pill-dot"></span>
-          <span>Hybrid Search (BM25 + BGE)</span>
-        </div>
-        <div className="cap-pill">
-          <span className="pill-dot"></span>
-          <span>Grounded QA (Qwen2.5)</span>
+          <div className={`status-pill-header ${backendOnline ? "online" : "offline"}`}>
+            <span className="status-dot-pulse" />
+            <span className="status-pill-text">
+              {backendOnline ? "AI system online" : "Connecting to API..."}
+            </span>
+          </div>
         </div>
       </div>
     </header>

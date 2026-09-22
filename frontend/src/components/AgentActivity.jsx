@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 
 export default function AgentActivity({ results }) {
+  const [isOpen, setIsOpen] = useState(false);
+
   if (!results) {
     return null;
   }
@@ -12,258 +14,170 @@ export default function AgentActivity({ results }) {
 
   const formatConfidence = (conf) => {
     if (typeof conf === "number") {
-      return `${(conf * 100).toFixed(2)}%`;
+      return `${(conf * 100).toFixed(1)}%`;
     }
     return conf || "N/A";
   };
 
   const getToolDisplayName = (tool) => {
     switch (tool) {
-      case "uploaded_rag":
-        return "Uploaded Documents Vector Retrieval (ChromaDB)";
-      case "multi_source_synthesis":
-        return "Multi-Source Synthesis (Corpus + Uploaded)";
+      case "classify_document":
       case "classification":
         return "Document Classification";
-      case "metadata":
-        return "Metadata Extraction";
+      case "retrieve_documents":
       case "search":
-        return "Hybrid Search";
+        return "Corpus & Vector Retrieval";
+      case "extract_document":
+      case "metadata":
+        return "Structured Field Extraction";
+      case "uploaded_rag":
+        return "Uploaded Document Retrieval (ChromaDB)";
+      case "multi_source_synthesis":
+        return "Multi-Source Synthesis";
       case "rag_qa":
         return "Grounded RAG QA";
+      case "gemini_reasoning":
+        return "Direct Model Reasoning";
       default:
-        return tool || "Agent Tool";
+        return tool ? tool.replace(/_/g, " ") : "Agent Operation";
     }
   };
 
   return (
-    <div className="tool-section">
-      <div className="section-heading small">
-        <div>
-          <p className="eyebrow">AGENT EXECUTION TRACE</p>
-          <h2>Agent activity</h2>
+    <section className="agent-activity-container" aria-label="Agent Execution Trace">
+      <button
+        type="button"
+        className="activity-toggle-btn"
+        onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+      >
+        <div className="activity-toggle-left">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg>
+          <span className="activity-toggle-title">Agent Execution Trace</span>
+          <span className="activity-count-badge">
+            {normalizedResults.length} {normalizedResults.length === 1 ? "step" : "steps"}
+          </span>
         </div>
-        <span className="activity-subtitle">
-          Sequential multi-tool planner invocation
-        </span>
-      </div>
 
-      <div className="tool-grid">
-        {normalizedResults.map((toolResult, index) => {
-          const stepNum = String(index + 1).padStart(2, "0");
-          const isSuccess = toolResult.status === "success";
+        <div className="activity-toggle-right">
+          <span className="activity-toggle-hint">{isOpen ? "Hide details" : "View details"}</span>
+          <svg
+            className={`chevron-icon ${isOpen ? "rotated" : ""}`}
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </div>
+      </button>
 
-          return (
-            <div
-              className={`tool-card ${toolResult.tool}`}
-              key={`${toolResult.tool}-${index}`}
-            >
-              <div className="tool-top">
-                <div className="tool-step-badge">
-                  <span className="step-num">{stepNum}</span>
-                  <span className="tool-tag">{toolResult.tool}</span>
+      {isOpen && (
+        <div className="activity-timeline">
+          {normalizedResults.map((toolResult, index) => {
+            const stepNum = index + 1;
+            const isSuccess = toolResult.status === "success" || !toolResult.status;
+
+            return (
+              <div className="activity-step-card" key={index}>
+                <div className="step-header">
+                  <div className="step-id">
+                    <span className="step-index">0{stepNum}</span>
+                    <span className="step-tool-name">{getToolDisplayName(toolResult.tool)}</span>
+                  </div>
+
+                  <span className={`step-status-pill ${isSuccess ? "success" : "failed"}`}>
+                    <span className="step-status-dot" />
+                    {toolResult.status || "completed"}
+                  </span>
                 </div>
 
-                <span className={`status-pill ${isSuccess ? "success" : "failed"}`}>
-                  <span className="status-indicator-dot"></span>
-                  {toolResult.status || "completed"}
-                </span>
-              </div>
+                <div className="step-details">
+                  {/* Classification details */}
+                  {(toolResult.predicted_class || toolResult.tool === "classify_document" || toolResult.tool === "classification") && (
+                    <div className="step-meta-row">
+                      {toolResult.predicted_class && (
+                        <div className="meta-pair">
+                          <span className="meta-key">Predicted Class</span>
+                          <span className="meta-val highlight">{toolResult.predicted_class}</span>
+                        </div>
+                      )}
+                      {toolResult.confidence !== undefined && (
+                        <div className="meta-pair">
+                          <span className="meta-key">Confidence</span>
+                          <span className="meta-val mono">{formatConfidence(toolResult.confidence)}</span>
+                        </div>
+                      )}
+                      {toolResult.document_id && (
+                        <div className="meta-pair">
+                          <span className="meta-key">Target Doc</span>
+                          <span className="meta-val mono">{toolResult.document_id}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-              <h3 className="tool-title">{getToolDisplayName(toolResult.tool)}</h3>
-
-              {/* Uploaded RAG / Multi-Source */}
-              {(toolResult.tool === "uploaded_rag" || toolResult.tool === "multi_source_synthesis") && (
-                <div className="tool-body">
-                  {toolResult.documents && toolResult.documents.length > 0 && (
-                    <div className="metadata-row">
-                      <span className="meta-label">Matched Documents</span>
-                      <div className="doc-id-chip-list">
-                        {toolResult.documents.map((docName, i) => (
-                          <span key={i} className="doc-chip uploaded-doc-chip">
-                            {docName}
-                          </span>
-                        ))}
+                  {/* Retrieval details */}
+                  {(toolResult.count !== undefined || toolResult.tool === "retrieve_documents" || toolResult.tool === "search") && (
+                    <div className="step-meta-row">
+                      {toolResult.query && (
+                        <div className="meta-pair">
+                          <span className="meta-key">Query</span>
+                          <span className="meta-val">"{toolResult.query}"</span>
+                        </div>
+                      )}
+                      <div className="meta-pair">
+                        <span className="meta-key">Evidence Retrieved</span>
+                        <span className="meta-val mono">{toolResult.count ?? toolResult.results?.length ?? 0} chunks</span>
                       </div>
                     </div>
                   )}
 
-                  {toolResult.mode && (
-                    <div className="metadata-row">
-                      <span className="meta-label">Retrieval Scope</span>
-                      <span className="meta-value method-tag">{toolResult.mode}</span>
-                    </div>
-                  )}
-
-                  {toolResult.sources && toolResult.sources.length > 0 && (
-                    <div className="metadata-row">
-                      <span className="meta-label">Evidence Chunks</span>
-                      <span className="meta-value score-val">{toolResult.sources.length} retrieved</span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Classification */}
-              {toolResult.tool === "classification" && (
-                <div className="tool-body">
-                  <div className="value-highlight class-highlight">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                      <polyline points="14 2 14 8 20 8" />
-                    </svg>
-                    <span>{toolResult.predicted_class || "Unknown"}</span>
-                  </div>
-
-                  <div className="metadata-row">
-                    <span className="meta-label">Confidence</span>
-                    <span className="meta-value confidence-value">
-                      {formatConfidence(toolResult.confidence)}
-                    </span>
-                  </div>
-
-                  {toolResult.document_id && (
-                    <div className="metadata-row">
-                      <span className="meta-label">Document</span>
-                      <span className="meta-value doc-id-tag">{toolResult.document_id}</span>
-                    </div>
-                  )}
-
-                  {toolResult.probabilities && (
-                    <div className="probability-breakdown">
-                      <span className="breakdown-title">Class Distribution</span>
-                      <div className="probability-bars">
-                        {Object.entries(toolResult.probabilities).map(([cls, prob]) => (
-                          <div key={cls} className="prob-item">
-                            <span className="prob-name">{cls}</span>
-                            <div className="prob-bar-track">
-                              <div
-                                className="prob-bar-fill"
-                                style={{ width: `${Math.min(100, Math.max(2, prob * 100))}%` }}
-                              ></div>
-                            </div>
-                            <span className="prob-num">{(prob * 100).toFixed(1)}%</span>
+                  {/* Extraction details */}
+                  {(toolResult.extracted_data || toolResult.tool === "extract_document" || toolResult.tool === "metadata") && (
+                    <div className="step-meta-row">
+                      {toolResult.extracted_data && typeof toolResult.extracted_data === "object" && (
+                        <div className="meta-pair full-width">
+                          <span className="meta-key">Extracted Fields</span>
+                          <div className="extracted-fields-list">
+                            {Object.entries(toolResult.extracted_data).map(([k, v]) => (
+                              <span key={k} className="field-tag">
+                                <span className="field-k">{k}:</span>{" "}
+                                <span className="field-v">{typeof v === "object" ? JSON.stringify(v) : String(v)}</span>
+                              </span>
+                            ))}
                           </div>
-                        ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Uploaded Documents scope */}
+                  {toolResult.documents && toolResult.documents.length > 0 && (
+                    <div className="step-meta-row">
+                      <div className="meta-pair full-width">
+                        <span className="meta-key">Scoped Documents</span>
+                        <div className="extracted-fields-list">
+                          {toolResult.documents.map((d, i) => (
+                            <span key={i} className="field-tag mono">{d}</span>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   )}
                 </div>
-              )}
-
-              {/* Metadata */}
-              {toolResult.tool === "metadata" && (
-                <div className="tool-body">
-                  <div className="value-highlight amount-highlight">
-                    <span className="currency-val">{toolResult.value || "Not found"}</span>
-                  </div>
-
-                  <div className="metadata-row">
-                    <span className="meta-label">Field</span>
-                    <span className="meta-value field-tag">{toolResult.field}</span>
-                  </div>
-
-                  {toolResult.document_id && (
-                    <div className="metadata-row">
-                      <span className="meta-label">Document</span>
-                      <span className="meta-value doc-id-tag">{toolResult.document_id}</span>
-                    </div>
-                  )}
-
-                  {toolResult.method && (
-                    <div className="metadata-row">
-                      <span className="meta-label">Method</span>
-                      <span className="meta-value method-tag">{toolResult.method}</span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Search */}
-              {toolResult.tool === "search" && (
-                <div className="tool-body">
-                  <div className="value-highlight search-highlight">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <circle cx="11" cy="11" r="8" />
-                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                    </svg>
-                    <span>{toolResult.count ?? (toolResult.results?.length || 0)} documents</span>
-                  </div>
-
-                  {toolResult.search_term && (
-                    <div className="metadata-row">
-                      <span className="meta-label">Search Term</span>
-                      <span className="meta-value term-tag">"{toolResult.search_term}"</span>
-                    </div>
-                  )}
-
-                  {toolResult.results && toolResult.results.length > 0 && (
-                    <div className="doc-id-list-wrapper">
-                      <span className="meta-label">Matching Documents</span>
-                      <div className="doc-id-chip-list">
-                        {toolResult.results.map((res, i) => (
-                          <span key={i} className="doc-chip" title={res.text || res.document_id}>
-                            {res.document_id}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {toolResult.method && (
-                    <div className="metadata-row">
-                      <span className="meta-label">Method</span>
-                      <span className="meta-value method-tag">{toolResult.method}</span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* RAG QA */}
-              {toolResult.tool === "rag_qa" && (
-                <div className="tool-body">
-                  <div className="value-highlight rag-highlight">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                    </svg>
-                    <span>Grounded QA</span>
-                  </div>
-
-                  <div className="metadata-row">
-                    <span className="meta-label">Source</span>
-                    <span className="meta-value source-chunk-tag">
-                      {toolResult.source_chunk || "retrieved_chunk"}
-                    </span>
-                  </div>
-
-                  {toolResult.retrieval_score !== undefined && (
-                    <div className="metadata-row">
-                      <span className="meta-label">Retrieval Score</span>
-                      <span className="meta-value score-val">
-                        {toolResult.retrieval_score}
-                      </span>
-                    </div>
-                  )}
-
-                  {toolResult.method && (
-                    <div className="metadata-row">
-                      <span className="meta-label">Engine</span>
-                      <span className="meta-value method-tag">{toolResult.method}</span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Error or unsupported fallback */}
-              {toolResult.message && !isSuccess && (
-                <div className="tool-body error-body">
-                  <p className="tool-error-msg">{toolResult.message}</p>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
   );
 }

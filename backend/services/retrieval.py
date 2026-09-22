@@ -464,3 +464,158 @@ class RetrievalEngine:
 
 
 retrieval_engine = RetrievalEngine()
+
+
+def retrieve_documents(
+    query: str,
+    scope: Optional[Dict[str, Any]] = None,
+    top_k: int = 5,
+    user_id: str = "dev_user_001",
+) -> List[Dict[str, Any]]:
+    """
+    Standard DocuMind tool exposed to Gemini Agent:
+    retrieve_documents(query, scope=None, top_k=5)
+
+    Preserves hybrid retrieval:
+    - BM25S + BGE-small + RRF
+    - Uploaded document retrieval via ChromaDB with strict isolation (no fallback to global)
+    - Enterprise 223K+ chunk corpus search with document_type filtering
+    - Structural identifier boosting & bounded context expansion
+    """
+    if not query or not query.strip():
+        return []
+
+    scope_dict = scope or {}
+    effective_k = max(2, top_k)
+    results = []
+
+    # Check if this query targets an uploaded document
+    doc_id = scope_dict.get("document_id") or scope_dict.get("doc_id")
+    target_type = scope_dict.get("document_type") or scope_dict.get("label")
+
+    # If document_id is not given, check if query contains an uploaded document identifier
+    if not doc_id:
+        id_tokens = RetrievalEngine.detect_identifier_tokens(query)
+        doc_code_pattern = re.compile(r"^[A-Za-z0-9]{3,}(?:[-_][A-Za-z0-9]+)+$")
+        for token in id_tokens:
+            if doc_code_pattern.match(token):
+                matched = resolve_document_identifier(token)
+                if matched:
+                    doc_id = matched
+                    break
+
+        # Check ChromaDB uploaded documents by filename keyword matching
+        if not doc_id:
+            try:
+                from .chroma_service import chroma_service
+                if chroma_service.collection is not None:
+                    data = chroma_service.collection.get(include=["metadatas"])
+                    metadatas = data.get("metadatas", [])
+                    q_lower = query.lower()
+                    best_match_id = None
+                    best_overlap = 0
+
+                    for m in metadatas:
+                        if not m:
+                            continue
+                        fname = str(m.get("filename", "")).lower()
+                        fname_base = fname.rsplit(".", 1)[0]
+                        fname_words = [w for w in re.split(r"[\s_.-]+", fname_base) if len(w) > 2]
+                        overlap = sum(1 for w in fname_words if w in q_lower)
+                        if overlap > best_overlap:
+                            best_overlap = overlap
+                            best_match_id = m.get("document_id") or m.get("doc_id")
+
+                    # If significant overlap found or user query explicitly references uploads
+                    if best_overlap >= 1 and (best_overlap >= 2 or any(w in q_lower for w in ["uploaded", "upload", "my", "this"])):
+                        doc_id = best_match_id
+            except Exception as scan_err:
+                logger.warning("Error resolving uploaded document by filename: %s", scan_err)
+
+    # Mode A: Targeted uploaded document retrieval (strictly isolated)
+    if doc_id:
+        try:
+            from .documind_service import documind_service
+            query_emb = documind_service.embedding_model.encode([query], normalize_embeddings=True)[0]
+        except Exception:
+            import numpy as np
+            query_emb = np.zeros(384, dtype=np.float32)
+
+        hits = retrieval_engine.retrieve(
+            query=query,
+            query_embedding=query_emb,
+            user_id=user_id,
+            scope={"doc_id": doc_id, "source_type": "uploaded"},
+            document_id=doc_id,
+            top_k=effective_k,
+        )
+
+        for h in hits:
+            meta = h.get("metadata", {})
+            results.append({
+                "document_id": meta.get("document_id", doc_id),
+                "filename": meta.get("filename", "Uploaded Document"),
+                "page": int(meta.get("page", 1)),
+                "chunk_id": str(meta.get("chunk_id", h.get("id", ""))),
+                "text": h.get("text", h.get("document", "")),
+                "score": float(h.get("score", h.get("fused_score", 1.0))),
+                "source_type": "uploaded",
+            })
+        return results
+
+    # Mode B: Enterprise 223k+ chunk corpus search (or multi-document search)
+    try:
+        from .documind_service import documind_service
+        corpus_search = documind_service.search(query, top_k=effective_k * 2)
+        if corpus_search.get("status") == "success":
+            for item in corpus_search.get("results", []):
+                # Apply scope document_type filter if requested
+                item_label = str(item.get("label", "")).lower()
+                if target_type and target_type.lower() not in item_label:
+                    continue
+
+                results.append({
+                    "document_id": item.get("document_id", ""),
+                    "filename": f"{item.get('label', 'Corpus')} Document",
+                    "page": 1,
+                    "chunk_id": str(item.get("chunk_index", "")),
+                    "text": item.get("text", ""),
+                    "score": float(item.get("score", 0.0)),
+                    "source_type": "corpus",
+                    "label": item.get("label", ""),
+                })
+    except Exception as e:
+        logger.warning("Corpus search fallback error: %s", e)
+
+    # Also search ChromaDB if any user uploaded documents exist without a specific doc target
+    try:
+        from .documind_service import documind_service
+        query_emb = documind_service.embedding_model.encode([query], normalize_embeddings=True)[0]
+        chroma_hits = chroma_service.query_vectors(
+            query_embedding=query_emb,
+            user_id=user_id,
+            n_results=effective_k,
+            document_id=None,
+        )
+        if chroma_hits:
+            expanded = retrieval_engine.expand_context(chroma_hits)
+            for h in expanded:
+                meta = h.get("metadata", {})
+                dist = h.get("distance", 0.2)
+                sim_score = max(0.85, round(1.0 - float(dist), 4)) if dist is not None else 0.92
+                results.append({
+                    "document_id": meta.get("document_id", ""),
+                    "filename": meta.get("filename", "Uploaded Document"),
+                    "page": int(meta.get("page", 1)),
+                    "chunk_id": str(meta.get("chunk_id", h.get("id", ""))),
+                    "text": h.get("text", h.get("document", "")),
+                    "score": sim_score,
+                    "source_type": "uploaded",
+                })
+    except Exception as e:
+        logger.warning("ChromaDB search fallback error: %s", e)
+        pass
+
+    # Sort results by score and limit to top_k
+    results.sort(key=lambda r: r.get("score", 0.0), reverse=True)
+    return results[:effective_k]

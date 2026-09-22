@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import "./index.css";
 import { askAgent, checkHealth } from "./api/documind";
 
-import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import QuerySection from "./components/QuerySection";
 import FinalAnswerCard from "./components/FinalAnswerCard";
@@ -17,8 +16,7 @@ export default function App() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [backendOnline, setBackendOnline] = useState(true);
-  const [activeNav, setActiveNav] = useState("agent");
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [docCount, setDocCount] = useState(0);
 
   const resultsEndRef = useRef(null);
 
@@ -51,12 +49,21 @@ export default function App() {
 
     try {
       const data = await askAgent(question.trim());
-      setResult(data);
       setBackendOnline(true);
 
-      setTimeout(() => {
-        resultsEndRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 100);
+      if (data && data.status === "error") {
+        setError(
+          data.final_answer ||
+            "The document intelligence service is temporarily experiencing high traffic. Please retry in a moment."
+        );
+        setResult(null);
+      } else {
+        setResult(data);
+        setError("");
+        setTimeout(() => {
+          resultsEndRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 100);
+      }
     } catch (err) {
       setError(
         err.message || "Unable to connect to DocuMind backend. Ensure FastAPI is running on port 8000."
@@ -65,6 +72,11 @@ export default function App() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAskDocumentFromPanel = (doc) => {
+    setQuestion(`Summarize key obligations and terms in ${doc.filename}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // Helper to extract sources from result whether in results.sources or top level
@@ -80,22 +92,13 @@ export default function App() {
   };
 
   return (
-    <div className="app">
-      <Sidebar
-        activeNav={activeNav}
-        setActiveNav={setActiveNav}
-        backendOnline={backendOnline}
-        mobileOpen={mobileOpen}
-        setMobileOpen={setMobileOpen}
-      />
+    <div className="app-shell">
+      <Header backendOnline={backendOnline} docCount={docCount} />
 
-      <main className="main">
-        <Header onToggleMobile={() => setMobileOpen(!mobileOpen)} />
-
-        {activeNav === "documents" ? (
-          <UploadedDocumentsView />
-        ) : (
-          <div className="agent-workspace-view">
+      <main className="studio-canvas">
+        <div className="studio-grid">
+          {/* Left Column: Focused Agent Intelligence Workspace */}
+          <section className="agent-column" aria-label="Agent Workspace">
             <QuerySection
               question={question}
               setQuestion={setQuestion}
@@ -113,7 +116,7 @@ export default function App() {
             {loading && <LoadingState />}
 
             {result && !loading && (
-              <section className="results" ref={resultsEndRef}>
+              <div className="results-wrapper" ref={resultsEndRef}>
                 <FinalAnswerCard
                   finalAnswer={result.final_answer}
                   toolsUsedCount={result.tools_used?.length || 1}
@@ -121,10 +124,18 @@ export default function App() {
                 />
 
                 <AgentActivity results={result.results} />
-              </section>
+              </div>
             )}
-          </div>
-        )}
+          </section>
+
+          {/* Right Column: Integrated Document Repository Panel */}
+          <aside className="documents-column" aria-label="Document Management">
+            <UploadedDocumentsView
+              onDocCountChange={setDocCount}
+              onAskInAgent={handleAskDocumentFromPanel}
+            />
+          </aside>
+        </div>
       </main>
     </div>
   );

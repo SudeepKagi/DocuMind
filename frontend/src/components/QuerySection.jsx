@@ -34,21 +34,29 @@ export default function QuerySection({
   };
 
   return (
-    <section className="query-section">
-      <div className="query-box">
+    <section className="query-section" aria-label="Query Workspace">
+      <div className="agent-page-header">
+        <h1 className="page-title">Ask your documents</h1>
+        <p className="page-subtitle">
+          Query contracts, invoices, and your uploaded files with grounded, model-driven reasoning.
+        </p>
+      </div>
+
+      <div className={`query-container ${question.trim() ? "has-content" : ""}`}>
         <textarea
           ref={textareaRef}
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask questions across your uploaded files (resume, JD) or the enterprise corpus (contracts, invoices)..."
+          placeholder="Ask a question about your documents..."
           rows={3}
-          aria-label="Agent question input"
+          aria-label="Ask a question about your documents"
+          disabled={loading}
         />
 
         <div className="query-footer">
-          <div className="shortcut-hint">
-            <kbd>Enter</kbd> to ask &bull; <kbd>Shift + Enter</kbd> for newline
+          <div className="shortcut-hint" aria-hidden="true">
+            <kbd>Enter</kbd> to ask <span className="separator">&bull;</span> <kbd>Shift + Enter</kbd> for newline
           </div>
 
           <div className="query-actions">
@@ -57,7 +65,7 @@ export default function QuerySection({
                 type="button"
                 className="btn-clear"
                 onClick={() => setQuestion("")}
-                title="Clear question"
+                title="Clear question input"
               >
                 Clear
               </button>
@@ -65,19 +73,20 @@ export default function QuerySection({
 
             <button
               type="button"
-              className="btn-submit"
+              className="btn-ask"
               onClick={onSubmit}
               disabled={loading || !question.trim()}
+              aria-label="Submit question to DocuMind Agent"
             >
               {loading ? (
                 <>
-                  <span className="spinner-inline"></span>
+                  <span className="btn-spinner" aria-hidden="true" />
                   <span>Synthesizing...</span>
                 </>
               ) : (
                 <>
-                  <span>Ask Agent</span>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <span>Ask</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="5" y1="12" x2="19" y2="12" />
                     <polyline points="12 5 19 12 12 19" />
                   </svg>
@@ -88,21 +97,16 @@ export default function QuerySection({
         </div>
       </div>
 
-      <div className="examples">
-        <div className="examples-header">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-          </svg>
-          <span>Suggested agent queries</span>
-        </div>
-
-        <div className="example-list">
+      <div className="suggestions-block">
+        <span className="suggestions-label">Suggested queries</span>
+        <div className="suggestions-chips">
           {exampleQuestions.map((item) => (
             <button
               key={item}
               type="button"
               onClick={() => handleSelectExample(item)}
-              className="example-button"
+              className="suggestion-chip"
+              disabled={loading}
             >
               {item}
             </button>

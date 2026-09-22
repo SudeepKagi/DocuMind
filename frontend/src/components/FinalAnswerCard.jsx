@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { marked } from "marked";
 
-// Configure marked with GitHub Flavored Markdown
 marked.setOptions({
   gfm: true,
   breaks: false,
@@ -33,100 +32,105 @@ export default function FinalAnswerCard({ finalAnswer, toolsUsedCount, sources =
   };
 
   return (
-    <div className="answer-card-wrapper">
-      <div className="section-heading">
-        <div>
-          <p className="eyebrow">SYNTHESIZED INTELLIGENCE</p>
-          <h2>Grounded response</h2>
-        </div>
-
-        {toolsUsedCount !== undefined && (
-          <div className="tool-count-badge">
-            <span className="count-indicator"></span>
-            {toolsUsedCount} {toolsUsedCount === 1 ? "source / tool" : "sources / tools"} executed
-          </div>
-        )}
-      </div>
-
+    <article className="final-answer-container" aria-label="Grounded Answer">
       <div className="answer-card">
-        <div className="answer-top">
-          <div className="answer-label">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            </svg>
-            <span>FINAL ANSWER</span>
+        <header className="answer-header">
+          <div className="answer-tag">
+            <span className="answer-tag-dot" />
+            <span>Grounded Answer</span>
           </div>
 
-          <button
-            type="button"
-            className="copy-button"
-            onClick={handleCopy}
-            title="Copy answer to clipboard"
-          >
-            {copied ? (
-              <>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-                <span>Copied</span>
-              </>
-            ) : (
-              <>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                </svg>
-                <span>Copy</span>
-              </>
+          <div className="answer-header-actions">
+            {toolsUsedCount !== undefined && (
+              <span className="tool-count-pill">
+                {toolsUsedCount} {toolsUsedCount === 1 ? "tool" : "tools"} executed
+              </span>
             )}
-          </button>
-        </div>
+
+            <button
+              type="button"
+              className="btn-copy"
+              onClick={handleCopy}
+              aria-label="Copy answer to clipboard"
+            >
+              {copied ? (
+                <>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  <span>Copied</span>
+                </>
+              ) : (
+                <>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                  </svg>
+                  <span>Copy</span>
+                </>
+              )}
+            </button>
+          </div>
+        </header>
 
         <div
-          className="answer-text markdown-body"
+          className="answer-body markdown-content"
           dangerouslySetInnerHTML={{ __html: htmlContent }}
         />
 
         {sources && sources.length > 0 && (
-          <div className="sources-section">
+          <footer className="answer-sources">
             <div className="sources-header">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-              </svg>
-              <span>Cited Sources & Evidence ({sources.length})</span>
+              <span className="sources-title">Cited Evidence ({sources.length})</span>
+              <span className="sources-note">Grounded in verified document context</span>
             </div>
 
-            <div className="sources-grid">
-              {sources.map((src, idx) => (
-                <div
-                  key={idx}
-                  className={`source-chip-card ${expandedSource === idx ? "expanded" : ""}`}
-                  onClick={() => toggleSource(idx)}
-                >
-                  <div className="source-chip-header">
-                    <span className="source-file-name">{src.filename || src.document_id || `Source ${idx + 1}`}</span>
-                    <div className="source-meta-badges">
-                      {src.page && <span className="source-badge page-badge">Page {src.page}</span>}
-                      {src.score !== undefined && (
-                        <span className="source-badge score-badge">
-                          {(src.score * 100).toFixed(0)}% match
-                        </span>
-                      )}
+            <div className="sources-list">
+              {sources.map((src, idx) => {
+                const isExpanded = expandedSource === idx;
+                const docLabel = src.filename || src.document_id || `Source ${idx + 1}`;
+
+                return (
+                  <div
+                    key={idx}
+                    className={`source-item ${isExpanded ? "expanded" : ""}`}
+                    onClick={() => toggleSource(idx)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        toggleSource(idx);
+                      }
+                    }}
+                    aria-expanded={isExpanded}
+                  >
+                    <div className="source-item-header">
+                      <span className="source-doc-name" title={docLabel}>
+                        {docLabel}
+                      </span>
+                      <div className="source-badges">
+                        {src.page && <span className="source-meta-tag">Page {src.page}</span>}
+                        {src.score !== undefined && (
+                          <span className="source-meta-tag score">
+                            {(src.score * 100).toFixed(0)}% match
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  {src.text && (
-                    <p className="source-snippet">
-                      {expandedSource === idx ? src.text : `${src.text.slice(0, 140)}...`}
-                    </p>
-                  )}
-                </div>
-              ))}
+                    {src.text && (
+                      <p className="source-snippet">
+                        {isExpanded ? src.text : `${src.text.slice(0, 160).trim()}...`}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-          </div>
+          </footer>
         )}
       </div>
-    </div>
+    </article>
   );
 }

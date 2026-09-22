@@ -8,8 +8,29 @@ export default function Sidebar({
   setMobileOpen,
 }) {
   const navItems = [
-    { id: "agent", label: "Agent", icon: "agent" },
-    { id: "documents", label: "Documents", icon: "documents" },
+    {
+      id: "agent",
+      label: "Agent",
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M12 2v3m0 14v3M2 12h3m14 0h3" />
+          <path d="m4.93 4.93 2.12 2.12m9.9 9.9 2.12 2.12M4.93 19.07l2.12-2.12m9.9-9.9 2.12-2.12" />
+        </svg>
+      ),
+    },
+    {
+      id: "documents",
+      label: "Documents",
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+          <path d="M8 7h8" />
+          <path d="M8 11h8" />
+          <path d="M8 15h5" />
+        </svg>
+      ),
+    },
   ];
 
   return (
@@ -18,71 +39,55 @@ export default function Sidebar({
         <div
           className="sidebar-backdrop"
           onClick={() => setMobileOpen(false)}
+          aria-hidden="true"
         />
       )}
+
       <aside className={`sidebar ${mobileOpen ? "open" : ""}`}>
-        <div className="brand">
-          <div className="brand-mark">
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <line x1="16" y1="13" x2="8" y2="13" />
-              <line x1="16" y1="17" x2="8" y2="17" />
-              <polyline points="10 9 9 9 8 9" />
-            </svg>
-          </div>
-          <div>
-            <h2>DocuMind</h2>
-            <span>Document Intelligence</span>
+        <div className="sidebar-header">
+          <div className="brand">
+            <div className="brand-mark">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="18" height="18" x="3" y="3" rx="4" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+            </div>
+            <div className="brand-meta">
+              <span className="brand-title">DocuMind</span>
+              <span className="brand-tag">v1.0</span>
+            </div>
           </div>
         </div>
 
-        <nav>
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => {
-                setActiveNav(item.id);
-                setMobileOpen(false);
-              }}
-              className={`nav-item ${activeNav === item.id ? "active" : ""}`}
-            >
-              {item.id === "agent" && (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-                </svg>
-              )}
-              {item.id === "documents" && (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-                </svg>
-              )}
-              <span>{item.label}</span>
-            </button>
-          ))}
+        <nav className="sidebar-nav" aria-label="Main Navigation">
+          <div className="nav-group-label">Intelligence</div>
+          {navItems.map((item) => {
+            const isActive = activeNav === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  setActiveNav(item.id);
+                  setMobileOpen(false);
+                }}
+                className={`nav-item ${isActive ? "active" : ""}`}
+                aria-current={isActive ? "page" : undefined}
+              >
+                <span className="nav-icon">{item.icon}</span>
+                <span className="nav-label">{item.label}</span>
+                {isActive && <span className="nav-active-pip" />}
+              </button>
+            );
+          })}
         </nav>
 
-        <div className="sidebar-bottom">
-          <div className="system-status">
-            <span className={`status-dot ${backendOnline ? "online" : "offline"}`}></span>
-            <span className="status-text">
-              {backendOnline ? "AI system online" : "Backend connecting..."}
+        <div className="sidebar-footer">
+          <div className="system-pill" title={backendOnline ? "Operational" : "Disconnected"}>
+            <span className={`status-dot ${backendOnline ? "online" : "offline"}`} />
+            <span className="system-status-text">
+              {backendOnline ? "Hosted Agent Ready" : "FastAPI Offline"}
             </span>
-          </div>
-
-          <div className="model-badges">
-            <span className="badge">ChromaDB</span>
-            <span className="badge">BGE</span>
-            <span className="badge">Qwen 2.5</span>
           </div>
         </div>
       </aside>

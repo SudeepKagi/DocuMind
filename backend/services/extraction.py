@@ -852,6 +852,12 @@ class ExtractionEngine:
             fields_to_extract = list(getattr(schema, "fields", []))
             schema_name = schema.__class__.__name__.lower()
 
+        elif isinstance(schema, dict):
+            for k, v in schema.items():
+                if k.lower() in ("line_items", "table", "items", "deliverables"):
+                    schema_name = "line_items"
+                fields_to_extract.append(k)
+
         elif isinstance(schema, (list, tuple, set)):
             for item in schema:
                 if isinstance(item, str):
@@ -900,3 +906,21 @@ class ExtractionEngine:
 
 
 extraction_engine = ExtractionEngine()
+
+
+def extract_document(
+    evidence: str,
+    schema: Union[Dict[str, Any], List[str], str],
+) -> Dict[str, Any]:
+    """
+    Standard DocuMind tool exposed to Gemini Agent:
+    extract_document(evidence, schema)
+
+    The schema is supplied dynamically by Gemini, e.g.:
+    {"vendor_name": "string", "invoice_total": "number"} or
+    {"iban": "string", "swift_code": "string"} or
+    {"project_budget": "number", "actual_spend": "number"}
+    """
+    if not evidence or not evidence.strip():
+        return {}
+    return extraction_engine.extract(evidence_text=evidence, schema=schema)

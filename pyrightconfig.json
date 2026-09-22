@@ -1,0 +1,23 @@
+{
+  "include": [
+    "backend",
+    "ml/src",
+    "tests",
+    "evaluation"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    "ml/.venv",
+    "backend/storage"
+  ],
+  "extraPaths": [
+    "backend",
+    "backend/packages",
+    "ml/src"
+  ],
+  "venvPath": "ml",
+  "venv": ".venv",
+  "reportMissingImports": "none",
+  "reportMissingModuleSource": "none"
+}

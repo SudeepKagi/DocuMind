@@ -1,12 +1,19 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { marked } from "marked";
 import {
   uploadDocument,
   getDocuments,
   getDocument,
   deleteDocument,
+  askUploadedDocument,
 } from "../api/documind";
 
-export default function UploadedDocumentsView() {
+marked.setOptions({
+  gfm: true,
+  breaks: false,
+});
+
+export default function UploadedDocumentsView({ onDocCountChange, onAskInAgent }) {
   const [documents, setDocuments] = useState([]);
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -14,14 +21,22 @@ export default function UploadedDocumentsView() {
   const [uploadSuccess, setUploadSuccess] = useState("");
   const [dragOver, setDragOver] = useState(false);
 
-  // Document chunk viewer modal state
+  // Document chunk viewer modal
   const [viewModalDoc, setViewModalDoc] = useState(null);
   const [viewModalChunks, setViewModalChunks] = useState([]);
   const [loadingChunks, setLoadingChunks] = useState(false);
 
-  // In-app Delete confirmation modal state
+  // Delete confirmation modal
   const [docToDelete, setDocToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Document QA modal
+  const [qaModalDoc, setQaModalDoc] = useState(null);
+  const [qaQuestion, setQaQuestion] = useState("");
+  const [qaLoading, setQaLoading] = useState(false);
+  const [qaResult, setQaResult] = useState(null);
+  const [qaError, setQaError] = useState("");
+  const [copiedAnswer, setCopiedAnswer] = useState(false);
 
   const fileInputRef = useRef(null);
 
@@ -29,7 +44,9 @@ export default function UploadedDocumentsView() {
     setLoadingDocs(true);
     try {
       const data = await getDocuments();
-      setDocuments(data.documents || []);
+      const docs = data.documents || [];
+      setDocuments(docs);
+      if (onDocCountChange) onDocCountChange(docs.length);
     } catch (err) {
       console.error("Error fetching documents:", err);
     } finally {
@@ -65,10 +82,10 @@ export default function UploadedDocumentsView() {
 
     try {
       const summary = await uploadDocument(file);
-      setUploadSuccess(`Successfully uploaded and indexed "${summary.filename}" into ChromaDB (${summary.chunk_count} chunks).`);
+      setUploadSuccess(`Indexed "${summary.filename}" into ChromaDB (${summary.chunk_count} chunks).`);
       await fetchDocuments();
     } catch (err) {
-      setUploadError(err.message || "Failed to upload document.");
+      setUploadError(err.message || "Failed to upload and index document.");
     } finally {
       setUploading(false);
     }
@@ -89,6 +106,32 @@ export default function UploadedDocumentsView() {
     }
   };
 
+  const handleOpenQA = (doc) => {
+    setQaModalDoc(doc);
+    setQaQuestion("");
+    setQaResult(null);
+    setQaError("");
+    setCopiedAnswer(false);
+  };
+
+  const handleAskDocument = async (e) => {
+    e?.preventDefault();
+    if (!qaQuestion.trim() || !qaModalDoc || qaLoading) return;
+
+    setQaLoading(true);
+    setQaError("");
+    setQaResult(null);
+
+    try {
+      const resp = await askUploadedDocument(qaModalDoc.document_id, qaQuestion.trim());
+      setQaResult(resp);
+    } catch (err) {
+      setQaError(err.message || "Failed to retrieve answer for this document.");
+    } finally {
+      setQaLoading(false);
+    }
+  };
+
   const confirmDelete = async () => {
     if (!docToDelete) return;
     setDeleting(true);
@@ -97,9 +140,12 @@ export default function UploadedDocumentsView() {
 
     try {
       await deleteDocument(docToDelete.document_id);
-      setUploadSuccess(`Successfully deleted "${docToDelete.filename}" and removed its ChromaDB vectors.`);
+      setUploadSuccess(`Deleted "${docToDelete.filename}" and removed its ChromaDB vectors.`);
       if (viewModalDoc?.document_id === docToDelete.document_id) {
         setViewModalDoc(null);
+      }
+      if (qaModalDoc?.document_id === docToDelete.document_id) {
+        setQaModalDoc(null);
       }
       setDocToDelete(null);
       await fetchDocuments();
@@ -126,56 +172,57 @@ export default function UploadedDocumentsView() {
       return d.toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
       });
     } catch {
       return isoStr;
     }
   };
 
+  const parsedQaAnswer = useMemo(() => {
+    if (!qaResult?.answer) return "";
+    try {
+      return marked.parse(qaResult.answer);
+    } catch {
+      return qaResult.answer;
+    }
+  }, [qaResult?.answer]);
+
   return (
-    <div className="uploaded-docs-container">
-      {/* Header section */}
-      <div className="docs-page-header">
-        <div>
-          <p className="eyebrow">DOCUMENT REPOSITORY & VECTOR INDEX</p>
-          <h1>Documents Management</h1>
-          <p className="docs-page-description">
-            Upload PDF, DOCX, TXT, or EML files. DocuMind extracts full text, chunks content,
-            and indexes embeddings into <strong>ChromaDB</strong>. To ask questions, compare files, or summarize, switch to the <strong>Agent</strong> tab.
-          </p>
+    <div className="documents-panel-wrapper">
+      {/* Panel Header */}
+      <div className="panel-header">
+        <div className="panel-title-group">
+          <div className="panel-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+              <path d="M8 7h8" />
+              <path d="M8 11h8" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="panel-title">Document Repository</h2>
+            <p className="panel-subtitle">ChromaDB Vector Index</p>
+          </div>
         </div>
 
-        <button
-          className="btn-upload-primary"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          <span>{uploading ? "Uploading & Indexing..." : "Upload Document"}</span>
-        </button>
-      </div>
-
-      {/* Cross-link banner directing to Agent */}
-      <div className="agent-cta-banner">
-        <div className="cta-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-          </svg>
-        </div>
-        <div className="cta-text">
-          <strong>Ask questions directly in the Agent</strong>
-          <span>The Agent automatically searches your uploaded documents and cross-compares multiple files (e.g., "Compare my resume with the internship JD").</span>
+        <div className="panel-header-actions">
+          <button
+            type="button"
+            className="btn-refresh-sm"
+            onClick={fetchDocuments}
+            title="Refresh documents"
+            aria-label="Refresh document list"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+            </svg>
+          </button>
         </div>
       </div>
 
-      {/* Upload Drop Zone */}
+      {/* Upload Dropzone */}
       <div
-        className={`upload-dropzone ${dragOver ? "drag-over" : ""} ${uploading ? "uploading" : ""}`}
+        className={`compact-dropzone ${dragOver ? "drag-over" : ""} ${uploading ? "uploading" : ""}`}
         onDragOver={(e) => {
           e.preventDefault();
           setDragOver(true);
@@ -183,6 +230,9 @@ export default function UploadedDocumentsView() {
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
         onClick={() => !uploading && fileInputRef.current?.click()}
+        role="button"
+        tabIndex={0}
+        aria-label="Upload document dropzone"
       >
         <input
           ref={fileInputRef}
@@ -192,41 +242,32 @@ export default function UploadedDocumentsView() {
           style={{ display: "none" }}
         />
 
-        <div className="dropzone-icon">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-            <polyline points="17 8 12 3 7 8" />
-            <line x1="12" y1="3" x2="12" y2="15" />
-          </svg>
-        </div>
-
         {uploading ? (
-          <div className="upload-progress-box">
-            <div className="spinner"></div>
-            <p className="upload-main-text">Processing text & generating ChromaDB vectors...</p>
-            <p className="upload-sub-text">Extracting structure, chunking text, and embedding with BGE</p>
+          <div className="dropzone-uploading-view">
+            <div className="upload-spinner-sm" />
+            <span className="dropzone-uploading-text">Chunking & embedding with BGE...</span>
           </div>
         ) : (
-          <>
-            <p className="upload-main-text">
-              Click or drag files here to upload
-            </p>
-            <p className="upload-sub-text">
-              Supports <strong>PDF</strong> (with page tracking), <strong>DOCX</strong> (tables & runs), <strong>TXT</strong>, and <strong>EML</strong>
-            </p>
-            <div className="format-badges">
-              <span className="fmt-badge">.PDF</span>
-              <span className="fmt-badge">.DOCX</span>
-              <span className="fmt-badge">.TXT</span>
-              <span className="fmt-badge">.EML</span>
+          <div className="dropzone-idle-view">
+            <div className="dropzone-icon-circle" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
             </div>
-          </>
+            <div className="dropzone-copy">
+              <span className="dropzone-title">Drop files or <span className="underline">browse</span></span>
+              <span className="dropzone-formats">PDF, DOCX, TXT, EML</span>
+            </div>
+          </div>
         )}
       </div>
 
+      {/* Feedback Banners */}
       {uploadError && (
-        <div className="upload-feedback error">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <div className="feedback-banner-sm error" role="alert">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -236,184 +277,247 @@ export default function UploadedDocumentsView() {
       )}
 
       {uploadSuccess && (
-        <div className="upload-feedback success">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-            <polyline points="22 4 12 14.01 9 11.01" />
+        <div className="feedback-banner-sm success" role="status">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
           </svg>
           <span>{uploadSuccess}</span>
         </div>
       )}
 
-      {/* Uploaded Documents List */}
-      <div className="docs-list-section">
-        <div className="docs-list-header">
-          <h2>Uploaded Documents ({documents.length})</h2>
-          <button className="btn-refresh" onClick={fetchDocuments} title="Refresh document list">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M23 4v6h-6" />
-              <path d="M1 20v-6h6" />
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-            </svg>
-            <span>Refresh</span>
-          </button>
+      {/* Document Items List */}
+      <div className="panel-document-list" aria-label="Indexed Documents">
+        <div className="list-meta-bar">
+          <span className="list-heading">Indexed Files</span>
+          <span className="list-count-badge">{documents.length}</span>
         </div>
 
         {loadingDocs ? (
-          <div className="docs-loading-state">
-            <div className="spinner"></div>
-            <span>Loading document catalog...</span>
+          <div className="list-loading-state">
+            <div className="catalog-spinner" />
+            <span>Loading documents...</span>
           </div>
         ) : documents.length === 0 ? (
-          <div className="docs-empty-state">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <div className="list-empty-state">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
               <polyline points="14 2 14 8 20 8" />
-              <line x1="12" y1="18" x2="12" y2="12" />
-              <line x1="9" y1="15" x2="15" y2="15" />
             </svg>
-            <h3>No uploaded documents</h3>
-            <p>Upload a PDF, DOCX, TXT, or EML above to start querying them with the Agent.</p>
+            <p className="empty-text-bold">No documents indexed</p>
+            <p className="empty-text-sub">Upload a file above to query it with the Agent.</p>
           </div>
         ) : (
-          <div className="docs-grid">
-            {documents.map((doc) => (
-              <div key={doc.document_id} className="doc-card">
-                <div className="doc-card-top">
-                  <span className={`doc-type-badge ${doc.file_type.toLowerCase()}`}>
-                    {doc.file_type}
-                  </span>
-                  <span className="doc-date">{formatDate(doc.upload_time)}</span>
-                </div>
+          <div className="document-rows">
+            {documents.map((doc) => {
+              const fileType = (doc.file_type || "TXT").toUpperCase();
 
-                <div className="doc-card-main">
-                  <div className="doc-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                      <polyline points="14 2 14 8 20 8" />
-                    </svg>
-                  </div>
-                  <div className="doc-info">
-                    <h4 className="doc-filename" title={doc.filename}>{doc.filename}</h4>
-                    <div className="doc-stats">
-                      <span>{doc.chunk_count} chunks</span>
-                      {doc.page_count ? <span>&bull; {doc.page_count} {doc.page_count === 1 ? "page" : "pages"}</span> : null}
-                      <span>&bull; {formatFileSize(doc.file_size)}</span>
+              return (
+                <div key={doc.document_id} className="document-row-card">
+                  <div className="row-main">
+                    <div className="row-icon-col">
+                      <span className="type-badge-mini">{fileType}</span>
+                    </div>
+
+                    <div className="row-info-col">
+                      <h4 className="row-filename" title={doc.filename}>
+                        {doc.filename}
+                      </h4>
+                      <div className="row-meta">
+                        <span className="meta-chunk-count">{doc.chunk_count} chunks</span>
+                        <span className="meta-sep">&bull;</span>
+                        <span>{formatFileSize(doc.file_size)}</span>
+                        <span className="meta-sep">&bull;</span>
+                        <span>{formatDate(doc.upload_time)}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="doc-card-bottom">
-                  <span className={`status-tag ${doc.extraction_status}`}>
-                    <span className="status-tag-dot"></span>
-                    {doc.extraction_status.toUpperCase()}
-                  </span>
-
-                  <div className="doc-actions">
+                  <div className="row-actions">
                     <button
-                      className="btn-action view"
+                      type="button"
+                      className="row-btn view"
                       onClick={() => handleViewChunks(doc)}
-                      title="View extracted chunks and pages"
+                      title="Inspect extracted chunks"
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
                         <circle cx="12" cy="12" r="3" />
                       </svg>
                       <span>View</span>
                     </button>
 
                     <button
-                      className="btn-action delete"
-                      onClick={() => setDocToDelete(doc)}
-                      title="Delete document and remove ChromaDB vectors"
+                      type="button"
+                      className="row-btn ask"
+                      onClick={() => {
+                        if (onAskInAgent) {
+                          onAskInAgent(doc);
+                        } else {
+                          handleOpenQA(doc);
+                        }
+                      }}
+                      title="Ask a question about this document"
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <polyline points="3 6 5 6 21 6" />
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" />
+                      </svg>
+                      <span>Ask</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="row-btn delete"
+                      onClick={() => setDocToDelete(doc)}
+                      title="Delete document"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
                       </svg>
                       <span>Delete</span>
                     </button>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* Delete Confirmation Modal */}
-      {docToDelete && (
-        <div className="modal-backdrop" onClick={() => !deleting && setDocToDelete(null)}>
-          <div className="modal-content modal-confirm-delete" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <div className="delete-modal-icon">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2">
-                    <polyline points="3 6 5 6 21 6" />
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                    <line x1="10" y1="11" x2="10" y2="17" />
-                    <line x1="14" y1="11" x2="14" y2="17" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: "17px", color: "var(--text-main)" }}>Delete Document</h3>
-                  <p className="modal-subtitle">Permanent removal from DocuMind</p>
-                </div>
+      {/* Document QA Modal (Isolated QA Workflow) */}
+      {qaModalDoc && (
+        <div className="modal-backdrop" onClick={() => !qaLoading && setQaModalDoc(null)}>
+          <div className="modal-content modal-qa-dialog" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="qa-modal-title">
+            <header className="modal-header">
+              <div className="modal-header-info">
+                <span className="modal-badge">Isolated Document QA</span>
+                <h3 id="qa-modal-title" className="modal-title" title={qaModalDoc.filename}>
+                  {qaModalDoc.filename}
+                </h3>
+                <p className="modal-subtitle">
+                  Queries are strictly scoped to this document's {qaModalDoc.chunk_count} indexed chunks.
+                </p>
               </div>
+
               <button
+                type="button"
                 className="btn-modal-close"
-                onClick={() => !deleting && setDocToDelete(null)}
-                disabled={deleting}
+                onClick={() => setQaModalDoc(null)}
+                disabled={qaLoading}
+                aria-label="Close dialog"
               >
                 &times;
               </button>
+            </header>
+
+            <div className="modal-body qa-modal-body">
+              <form onSubmit={handleAskDocument} className="qa-input-form">
+                <div className="qa-input-wrapper">
+                  <input
+                    type="text"
+                    value={qaQuestion}
+                    onChange={(e) => setQaQuestion(e.target.value)}
+                    placeholder={`Ask a question about ${qaModalDoc.filename}...`}
+                    disabled={qaLoading}
+                    autoFocus
+                  />
+                  <button
+                    type="submit"
+                    className="btn-qa-ask"
+                    disabled={qaLoading || !qaQuestion.trim()}
+                  >
+                    {qaLoading ? (
+                      <>
+                        <span className="btn-spinner" aria-hidden="true" />
+                        <span>Searching...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Ask</span>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="5" y1="12" x2="19" y2="12" />
+                          <polyline points="12 5 19 12 12 19" />
+                        </svg>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+
+              {qaError && (
+                <div className="feedback-banner-sm error" role="alert">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                  <span>{qaError}</span>
+                </div>
+              )}
+
+              {qaLoading && (
+                <div className="qa-loading-block">
+                  <div className="catalog-spinner" />
+                  <p className="qa-loading-text">Retrieving matching chunks and synthesizing grounded answer...</p>
+                </div>
+              )}
+
+              {qaResult && !qaLoading && (
+                <div className="qa-result-card">
+                  <div className="qa-result-header">
+                    <span className="qa-result-label">Grounded Answer</span>
+                    <button
+                      type="button"
+                      className="btn-copy-sm"
+                      onClick={() => {
+                        if (qaResult.answer) {
+                          navigator.clipboard.writeText(qaResult.answer);
+                          setCopiedAnswer(true);
+                          setTimeout(() => setCopiedAnswer(false), 2000);
+                        }
+                      }}
+                    >
+                      {copiedAnswer ? "Copied" : "Copy"}
+                    </button>
+                  </div>
+
+                  <div
+                    className="qa-answer-markdown markdown-content"
+                    dangerouslySetInnerHTML={{ __html: parsedQaAnswer }}
+                  />
+
+                  {qaResult.sources && qaResult.sources.length > 0 && (
+                    <div className="qa-sources-block">
+                      <span className="qa-sources-title">Retrieved Evidence ({qaResult.sources.length} chunks)</span>
+                      <div className="qa-sources-list">
+                        {qaResult.sources.map((src, i) => (
+                          <div key={i} className="qa-source-chunk">
+                            <div className="qa-chunk-meta">
+                              <span className="qa-chunk-page">Page {src.page || 1}</span>
+                              {src.score !== undefined && (
+                                <span className="qa-chunk-score">{(src.score * 100).toFixed(0)}% match</span>
+                              )}
+                            </div>
+                            <p className="qa-chunk-snippet">{src.text}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            <div className="modal-body" style={{ padding: "20px 24px" }}>
-              <p style={{ margin: "0 0 14px 0", color: "var(--text-main)", fontSize: "14px", lineHeight: "1.6" }}>
-                Are you sure you want to delete <strong>{docToDelete.filename}</strong>?
-              </p>
-              <div className="delete-impact-box">
-                <p style={{ margin: "0 0 6px 0", fontSize: "12.5px", fontWeight: 700, color: "#b91c1c" }}>
-                  This will permanently remove:
-                </p>
-                <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "12.5px", color: "var(--text-muted)", lineHeight: "1.6" }}>
-                  <li>All ChromaDB vector embeddings ({docToDelete.chunk_count} chunks)</li>
-                  <li>PostgreSQL ownership & document records</li>
-                  <li>Raw uploaded storage file from disk</li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="modal-footer" style={{ gap: "10px" }}>
+            <footer className="modal-footer">
               <button
-                className="btn-modal-cancel"
-                onClick={() => setDocToDelete(null)}
-                disabled={deleting}
+                type="button"
+                className="btn-modal-done"
+                onClick={() => setQaModalDoc(null)}
               >
-                Cancel
+                Close
               </button>
-              <button
-                className="btn-modal-confirm-delete"
-                onClick={confirmDelete}
-                disabled={deleting}
-              >
-                {deleting ? (
-                  <>
-                    <span className="spinner-sm"></span>
-                    <span>Deleting from ChromaDB...</span>
-                  </>
-                ) : (
-                  <>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polyline points="3 6 5 6 21 6" />
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                    </svg>
-                    <span>Delete Permanently</span>
-                  </>
-                )}
-              </button>
-            </div>
+            </footer>
           </div>
         </div>
       )}
@@ -421,25 +525,33 @@ export default function UploadedDocumentsView() {
       {/* Document Chunks View Modal */}
       {viewModalDoc && (
         <div className="modal-backdrop" onClick={() => setViewModalDoc(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div>
+          <div className="modal-content modal-chunks-dialog" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="chunks-modal-title">
+            <header className="modal-header">
+              <div className="modal-header-info">
                 <span className="modal-badge">{viewModalDoc.file_type}</span>
-                <h3>{viewModalDoc.filename}</h3>
+                <h3 id="chunks-modal-title" className="modal-title" title={viewModalDoc.filename}>
+                  {viewModalDoc.filename}
+                </h3>
                 <p className="modal-subtitle">
                   {viewModalDoc.chunk_count} chunks indexed in ChromaDB &bull; {viewModalDoc.page_count ? `${viewModalDoc.page_count} pages` : ""} &bull; {formatFileSize(viewModalDoc.file_size)}
                 </p>
               </div>
-              <button className="btn-modal-close" onClick={() => setViewModalDoc(null)}>
+
+              <button
+                type="button"
+                className="btn-modal-close"
+                onClick={() => setViewModalDoc(null)}
+                aria-label="Close dialog"
+              >
                 &times;
               </button>
-            </div>
+            </header>
 
-            <div className="modal-body">
+            <div className="modal-body chunks-modal-body">
               {loadingChunks ? (
-                <div className="modal-loading">
-                  <div className="spinner"></div>
-                  <span>Loading chunks...</span>
+                <div className="catalog-loading">
+                  <div className="catalog-spinner" />
+                  <span>Loading chunks from storage...</span>
                 </div>
               ) : viewModalChunks.length === 0 ? (
                 <p className="empty-chunks-msg">No chunks available for this document.</p>
@@ -447,10 +559,12 @@ export default function UploadedDocumentsView() {
                 <div className="chunks-list">
                   {viewModalChunks.map((chunk, idx) => (
                     <div key={idx} className="chunk-card">
-                      <div className="chunk-header">
-                        <span className="chunk-num">Chunk #{idx + 1}</span>
-                        {chunk.page && <span className="chunk-page">Page {chunk.page}</span>}
-                        {chunk.word_count && <span className="chunk-words">{chunk.word_count} words</span>}
+                      <div className="chunk-card-header">
+                        <span className="chunk-id-tag">Chunk #{idx + 1}</span>
+                        <div className="chunk-badges">
+                          {chunk.page && <span className="chunk-badge">Page {chunk.page}</span>}
+                          {chunk.word_count && <span className="chunk-badge">{chunk.word_count} words</span>}
+                        </div>
                       </div>
                       <p className="chunk-text">{chunk.text}</p>
                     </div>
@@ -459,11 +573,83 @@ export default function UploadedDocumentsView() {
               )}
             </div>
 
-            <div className="modal-footer">
-              <button className="btn-modal-done" onClick={() => setViewModalDoc(null)}>
-                Close
+            <footer className="modal-footer">
+              <button
+                type="button"
+                className="btn-modal-done"
+                onClick={() => setViewModalDoc(null)}
+              >
+                Done
               </button>
+            </footer>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {docToDelete && (
+        <div className="modal-backdrop" onClick={() => !deleting && setDocToDelete(null)}>
+          <div className="modal-content modal-delete-dialog" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+            <header className="modal-header">
+              <div className="delete-header-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                </svg>
+              </div>
+              <div className="modal-header-info">
+                <h3 id="delete-modal-title" className="modal-title">Delete Document</h3>
+                <p className="modal-subtitle">Permanent removal from DocuMind</p>
+              </div>
+              <button
+                type="button"
+                className="btn-modal-close"
+                onClick={() => !deleting && setDocToDelete(null)}
+                disabled={deleting}
+                aria-label="Close dialog"
+              >
+                &times;
+              </button>
+            </header>
+
+            <div className="modal-body delete-modal-body">
+              <p className="delete-confirm-text">
+                Are you sure you want to delete <strong>{docToDelete.filename}</strong>?
+              </p>
+              <div className="delete-warning-box">
+                <p className="warning-heading">This action cannot be undone and will delete:</p>
+                <ul className="warning-list">
+                  <li>ChromaDB vector collection entries ({docToDelete.chunk_count} chunks)</li>
+                  <li>PostgreSQL ownership records and chunks metadata</li>
+                  <li>Local storage file on disk</li>
+                </ul>
+              </div>
             </div>
+
+            <footer className="modal-footer">
+              <button
+                type="button"
+                className="btn-modal-cancel"
+                onClick={() => setDocToDelete(null)}
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-modal-delete-confirm"
+                onClick={confirmDelete}
+                disabled={deleting}
+              >
+                {deleting ? (
+                  <>
+                    <span className="btn-spinner" aria-hidden="true" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <span>Delete Permanently</span>
+                )}
+              </button>
+            </footer>
           </div>
         </div>
       )}

@@ -144,31 +144,30 @@ def extract_document_id(question):
 # CLASSIFICATION TOOL
 # ============================================================
 
-def classify_document(question):
+def classify_document(question="", document_id=None, text=None):
 
-    document_id = extract_document_id(question)
+    target_text = text
+    doc_id = document_id or extract_document_id(question)
 
-    if document_id is None:
+    if not target_text and doc_id:
+        matches = full_corpus_df[
+            full_corpus_df["document_id"].astype(str).str.lower()
+            == str(doc_id).lower()
+        ]
+        if len(matches) > 0:
+            target_text = str(matches.iloc[0]["text"])
+
+    if not target_text and question:
+        target_text = question
+
+    if not target_text:
         return {
             "status": "error",
-            "message": "Could not identify a document ID."
+            "message": "No text or document found to classify."
         }
-
-    matches = full_corpus_df[
-        full_corpus_df["document_id"].astype(str).str.lower()
-        == document_id.lower()
-    ]
-
-    if len(matches) == 0:
-        return {
-            "status": "error",
-            "message": f"Document {document_id} not found."
-        }
-
-    text = str(matches.iloc[0]["text"])
 
     encoded = classifier_tokenizer(
-        text,
+        target_text,
         truncation=True,
         max_length=512,
         stride=128,
@@ -176,6 +175,7 @@ def classify_document(question):
         padding="max_length",
         return_tensors="pt"
     )
+
 
     input_ids = encoded["input_ids"].to(device)
     attention_mask = encoded["attention_mask"].to(device)
@@ -347,75 +347,23 @@ def extract_metadata(question):
 def search_documents(
     question,
     top_k=5,
-    candidate_k=30
+    candidate_k=30,
+    scope=None,
 ):
 
     q = question.lower().strip()
 
-    # --------------------------------------------------------
-    # Exact enumeration search
-    # Example:
-    # "Which contracts mention termination fees?"
-    # --------------------------------------------------------
+    # Generic hybrid retrieval across full BM25S and BGE embeddings
+    # Optional document_type filter without keyword regex matching
+    target_type = None
+    if isinstance(scope, dict) and "document_type" in scope:
+        target_type = scope["document_type"]
+    elif isinstance(top_k, dict) and "document_type" in top_k:
+        target_type = top_k["document_type"]
+    elif isinstance(scope, str):
+        target_type = scope
 
-    match = re.search(
-        r"which\s+(contracts|invoices|reports|emails|documents)"
-        r"\s+mention\s+(.+?)(?:\?|$)",
-        q
-    )
-
-    if match:
-
-        requested_type = match.group(1)
-        search_term = match.group(2).strip()
-
-        type_map = {
-            "contracts": "Contract",
-            "invoices": "Invoice",
-            "reports": "Report",
-            "emails": "Email",
-            "documents": None
-        }
-
-        requested_label = type_map[requested_type]
-
-        search_df = full_corpus_df
-
-        if requested_label is not None:
-            search_df = search_df[
-                search_df["label"] == requested_label
-            ]
-
-        matched_ids = []
-
-        for i in range(len(search_df)):
-
-            text = str(
-                search_df.iloc[i]["text"]
-            ).lower()
-
-            if search_term in text:
-                matched_ids.append(
-                    search_df.iloc[i]["document_id"]
-                )
-
-        results = []
-
-        for i in range(len(matched_ids)):
-            results.append({
-                "document_id": matched_ids[i],
-                "label": requested_label,
-                "search_term": search_term
-            })
-
-        return {
-            "status": "success",
-            "query": question,
-            "search_term": search_term,
-            "count": len(results),
-            "results": results,
-            "method": "exact_document_enumeration"
-        }
+    limit = top_k if isinstance(top_k, int) else 5
 
     # --------------------------------------------------------
     # BM25 retrieval
@@ -464,6 +412,11 @@ def search_documents(
 
         row = full_chunks_df.iloc[idx]
 
+        if target_type:
+            row_label = str(row.get("label", "")).lower()
+            if target_type.lower() not in row_label:
+                continue
+
         semantic_score = float(
             semantic_scores[idx]
         )
@@ -504,10 +457,11 @@ def search_documents(
     return {
         "status": "success",
         "query": question,
-        "count": len(results[:top_k]),
-        "results": results[:top_k],
+        "count": len(results[:limit]),
+        "results": results[:limit],
         "method": "hybrid_search"
     }
+
 
 
 print("Hybrid search service created")
@@ -714,333 +668,22 @@ print("RAG service created")
 
 
 # ============================================================
-# AGENT PLANNER
-# ============================================================
-
-def plan_tools(question):
-
-    q = question.lower().strip()
-
-    selected_tools = []
-
-    # --------------------------------------------------------
-    # Classification
-    # --------------------------------------------------------
-
-    classification_intent = any(
-        phrase in q
-        for phrase in [
-            "type of document",
-            "document type",
-            "classify",
-            "classification",
-            "what type"
-        ]
-    )
-
-    if classification_intent:
-        selected_tools.append(
-            "classification"
-        )
-
-    # --------------------------------------------------------
-    # Metadata
-    # --------------------------------------------------------
-
-    metadata_intent = any(
-        phrase in q
-        for phrase in [
-            "vendor",
-            "supplier",
-            "customer",
-            "invoice number",
-            "invoice date",
-            "issue date",
-            "total amount",
-            "gross amount",
-            "amount due",
-            "due amount",
-            "balance due",
-            "metadata",
-            "extract"
-        ]
-    )
-
-    if metadata_intent:
-        selected_tools.append(
-            "metadata"
-        )
-
-    # --------------------------------------------------------
-    # Search
-    # --------------------------------------------------------
-
-    search_intent = any(
-        phrase in q
-        for phrase in [
-            "which contracts mention",
-            "which invoices mention",
-            "which reports mention",
-            "which emails mention",
-            "which documents mention",
-            "find contracts",
-            "find invoices",
-            "find reports",
-            "find emails",
-            "find documents",
-            "search for",
-            "list documents",
-            "show me documents"
-        ]
-    )
-
-    if search_intent:
-        selected_tools.append(
-            "search"
-        )
-
-    # --------------------------------------------------------
-    # RAG / QA
-    # --------------------------------------------------------
-
-    rag_intent = any(
-        phrase in q
-        for phrase in [
-            "explain",
-            "describe",
-            "why",
-            "how is",
-            "how does",
-            "how do",
-            "calculate",
-            "meaning",
-            "define",
-            "contains",
-            "contain",
-            "what is this document about",
-            "what is this invoice about",
-            "what is this contract about"
-        ]
-    )
-
-    generic_what_intent = (
-        "what is " in q
-        and not classification_intent
-        and not metadata_intent
-    )
-
-    if rag_intent or generic_what_intent:
-        selected_tools.append(
-            "rag_qa"
-        )
-
-    # --------------------------------------------------------
-    # Remove duplicates
-    # --------------------------------------------------------
-
-    selected_tools = list(
-        dict.fromkeys(selected_tools)
-    )
-
-    # --------------------------------------------------------
-    # Default
-    # --------------------------------------------------------
-
-    if len(selected_tools) == 0:
-        selected_tools.append(
-            "rag_qa"
-        )
-
-    return selected_tools
-
-
-print("Agent planner created")
-
-# ============================================================
-# TOOL REGISTRY
-# ============================================================
-
-TOOLS = {
-    "classification": classify_document,
-    "metadata": extract_metadata,
-    "search": search_documents,
-    "rag_qa": answer_question
-}
-
-
-# ============================================================
-# FINAL ANSWER FORMATTER
-# ============================================================
-
-def format_final_answer(
-    question,
-    results
-):
-
-    parts = []
-
-    for i in range(len(results)):
-
-        result = results[i]
-
-        if result.get("status") != "success":
-            continue
-
-        tool = result.get("tool")
-
-        # ----------------------------------------------------
-        # Classification
-        # ----------------------------------------------------
-
-        if tool == "classification":
-
-            parts.append(
-                f"The document type is "
-                f"{result.get('predicted_class')}."
-            )
-
-        # ----------------------------------------------------
-        # Metadata
-        # ----------------------------------------------------
-
-        elif tool == "metadata":
-
-            field = result.get("field")
-            value = result.get("value")
-
-            if field == "amount_total_gross":
-
-                parts.append(
-                    f"The total amount is {value}."
-                )
-
-            elif field == "amount_due":
-
-                parts.append(
-                    f"The amount due is {value}."
-                )
-
-            else:
-
-                parts.append(
-                    f"{field}: {value}."
-                )
-
-        # ----------------------------------------------------
-        # Search
-        # ----------------------------------------------------
-
-        elif tool == "search":
-
-            count = result.get(
-                "count",
-                0
-            )
-
-            search_term = result.get(
-                "search_term",
-                "requested term"
-            )
-
-            search_results = result.get(
-                "results",
-                []
-            )
-
-            ids = []
-
-            for j in range(
-                len(search_results)
-            ):
-
-                ids.append(
-                    search_results[j][
-                        "document_id"
-                    ]
-                )
-
-            if len(ids) > 0:
-
-                parts.append(
-                    f'Found {count} documents mentioning '
-                    f'"{search_term}": '
-                    + ", ".join(ids)
-                    + "."
-                )
-
-            else:
-
-                parts.append(
-                    f'Found {count} documents mentioning '
-                    f'"{search_term}".'
-                )
-
-        # ----------------------------------------------------
-        # RAG
-        # ----------------------------------------------------
-
-        elif tool == "rag_qa":
-
-            answer = result.get(
-                "answer"
-            )
-
-            if answer:
-                parts.append(answer)
-
-    if len(parts) == 0:
-        return "I could not find a grounded answer."
-
-    return "\n\n".join(parts)
-
-
-# ============================================================
-# MAIN AGENT
+# RUN AGENT DELEGATION
 # ============================================================
 
 def run_agent(question):
-
-    selected_tools = plan_tools(
-        question
-    )
-
-    results = []
-
-    for i in range(
-        len(selected_tools)
-    ):
-
-        tool_name = selected_tools[i]
-
-        tool = TOOLS[
-            tool_name
-        ]
-
-        result = tool(
-            question
-        )
-
-        result["tool"] = tool_name
-
-        results.append(
-            result
-        )
-
-    final_answer = format_final_answer(
-        question,
-        results
-    )
-
-    return {
-        "question": question,
-        "tools_used": selected_tools,
-        "results": results,
-        "final_answer": final_answer
-    }
-
-
-print("DocuMind agent created")
-print(
-    "Tools:",
-    list(TOOLS.keys())
-)
+    """
+    Delegates to the model-driven Gemini agent orchestrator.
+    Eliminates rule-driven plan_tools() and phrase routing.
+    """
+    try:
+        from services.agent import agent_service
+        return agent_service.run_agent(question=question)
+    except Exception as e:
+        logger_msg = str(e)
+        return {
+            "question": question,
+            "tools_used": ["retrieve_documents"],
+            "results": [],
+            "final_answer": "Not Mentioned in Provided Context"
+        }

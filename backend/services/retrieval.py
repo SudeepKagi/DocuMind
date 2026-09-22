@@ -98,7 +98,7 @@ def resolve_document_identifier(identifier: str, collection: Optional[Any] = Non
         try:
             results = collection.get(where={"$or": [{"filename": {"$contains": identifier}}, {"doc_id": {"$contains": identifier}}]})
             if results and results.get("ids"):
-                for m in results.get("metadatas", []):
+                for m in (results.get("metadatas") or []):
                     if m and ("document_id" in m or "doc_id" in m):
                         return m.get("document_id") or m.get("doc_id")
         except Exception:
@@ -108,7 +108,7 @@ def resolve_document_identifier(identifier: str, collection: Optional[Any] = Non
         try:
             results = collection.get(where_document={"$contains": identifier}, include=["metadatas"])
             if results and results.get("ids"):
-                for m in results.get("metadatas", []):
+                for m in (results.get("metadatas") or []):
                     if m and ("document_id" in m or "doc_id" in m):
                         return m.get("document_id") or m.get("doc_id")
         except Exception:
@@ -117,8 +117,8 @@ def resolve_document_identifier(identifier: str, collection: Optional[Any] = Non
         # 3. Comprehensive scan across indexed metadatas and documents
         try:
             data = collection.get(include=["metadatas", "documents"])
-            metadatas = data.get("metadatas", [])
-            documents = data.get("documents", [])
+            metadatas = data.get("metadatas") or []
+            documents = data.get("documents") or []
             for m, d in zip(metadatas, documents):
                 if not m:
                     continue
@@ -567,7 +567,7 @@ def retrieve_documents(
         from .documind_service import documind_service
         corpus_search = documind_service.search(query, top_k=effective_k * 2)
         if corpus_search.get("status") == "success":
-            for item in corpus_search.get("results", []):
+            for item in (corpus_search.get("results") or []):
                 # Apply scope document_type filter if requested
                 item_label = str(item.get("label", "")).lower()
                 if target_type and target_type.lower() not in item_label:

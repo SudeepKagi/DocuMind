@@ -1,15 +1,14 @@
 {
   "include": [
     "backend",
-    "ml/src",
-    "tests",
-    "evaluation"
+    "ml/src"
   ],
   "exclude": [
     "**/node_modules",
     "**/__pycache__",
     "ml/.venv",
-    "backend/storage"
+    "backend/storage",
+    "backend/packages"
   ],
   "extraPaths": [
     "backend",

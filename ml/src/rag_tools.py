@@ -1,5 +1,9 @@
 import pandas as pd
 import bm25s
+from typing import Any, Dict
+
+STATE: Dict[str, Any] = {}
+
 def search_tool(
     question,
     top_k=5,
@@ -107,7 +111,7 @@ def search_tool(
 
     ranked_indices = sorted(
         scores,
-        key=scores.get,
+        key=lambda x: scores.get(x, 0.0),
         reverse=True
     )[:top_k]
 

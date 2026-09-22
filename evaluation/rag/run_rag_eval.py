@@ -24,7 +24,7 @@ logger = logging.getLogger("eval.rag")
 
 def run_rag_evaluation() -> Dict[str, Any]:
     """
-    Evaluates grounded enterprise question answering using Qwen2.5-1.5B-Instruct
+    Evaluates grounded enterprise question answering using Google Gemini
     across the 14-item benchmark suite.
     Computes:
     - Retrieval Hit Rate
@@ -122,7 +122,7 @@ def run_rag_evaluation() -> Dict[str, Any]:
 
     summary = {
         "benchmark": "rag_question_answering",
-        "model": "Qwen/Qwen2.5-1.5B-Instruct (Grounded RAG)",
+        "model": "Google Gemini (Grounded RAG)",
         "total_benchmark_questions": len(benchmarks),
         "metrics": {
             "retrieval_hit_rate": round(float(np.mean(retrieval_hits)), 4),

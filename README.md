@@ -7,11 +7,11 @@
 [![ChromaDB](https://img.shields.io/badge/Vector%20Store-ChromaDB-FF6F00?style=flat)](https://www.trychroma.com)
 [![Google GenAI](https://img.shields.io/badge/Agent-Google%20GenAI%20Gemini-4285F4?style=flat&logo=google&logoColor=white)](https://ai.google.dev)
 [![PyTorch](https://img.shields.io/badge/ML%20Core-PyTorch%20%7C%20CUDA-EE4C2C?style=flat&logo=pytorch&logoColor=white)](https://pytorch.org)
-[![Transformers](https://img.shields.io/badge/Models-DistilBERT%20%7C%20BGE%20%7C%20Qwen2.5-FFD21E?style=flat&logo=huggingface&logoColor=black)](https://huggingface.co)
+[![Transformers](https://img.shields.io/badge/Models-DistilBERT%20%7C%20LayoutLM%20%7C%20BGE-FFD21E?style=flat&logo=huggingface&logoColor=black)](https://huggingface.co)
 
-DocuMind is an enterprise-grade document intelligence platform combining high-accuracy local SLMs (Small Language Models) with frontier cloud agent orchestration:
+DocuMind is an enterprise-grade document intelligence platform combining high-accuracy fine-tuned ML models with frontier cloud agent orchestration:
 
-$$\text{Document Ingestion} \longrightarrow \text{Document Classification} \longrightarrow \text{Metadata Extraction} \longrightarrow \text{Hybrid Retrieval} \longrightarrow \text{Grounded Synthesis} \longrightarrow \text{Autonomous Agent}$$
+$$\text{Document Ingestion} \longrightarrow \text{DistilBERT Classification} \longrightarrow \text{LayoutLM / Generic Extraction} \longrightarrow \text{Hybrid BM25+BGE Retrieval} \longrightarrow \text{Hosted Gemini Reasoning}$$
 
 DocuMind provides a unified, service-oriented architecture capable of processing institutional document corpora (223,234 passages) alongside dynamic, multi-tenant user uploads (PDF, DOCX, TXT, EML) through model-driven autonomous orchestration.
 
@@ -20,24 +20,24 @@ DocuMind provides a unified, service-oriented architecture capable of processing
 ## Key Highlights
 
 - **Model-Driven Autonomous Agent:** Powered by the official Google GenAI Python SDK (`google-genai`) and Gemini models (`gemini-3.5-flash`), with autonomous tool calling, multi-model failover, in-context mathematical reasoning, and local ChromaDB evidence fallback.
-- **Unified Studio Canvas UI:** A single-page workspace inspired by modern editorial design (Godly.design) featuring a 60/40 responsive split between the Agent Workspace and the Integrated Document Repository.
+- **Unified Studio Canvas UI:** A single-page workspace inspired by modern editorial design (Godly.design) featuring a responsive layout integrating the Agent Workspace and the Document Management Repository.
 - **Strict Multi-Tenant Retrieval Isolation:** Scoped ChromaDB vector search enforcing tenant and document boundaries (`user_id`, `document_id`) with zero fallback to global queries on empty results.
 - **Hybrid Retrieval with RRF:** Lexical search (`BM25S`) and dense semantic search (`BAAI/bge-small-en-v1.5`) fused via Reciprocal Rank Fusion ($k=60$) with structural business identifier boosting (`INV-...`, `SOW-...`, `MSKU-...`, `SWIFT`).
 - **Fine-Tuned Document Classification:** Fine-tuned `distilbert-base-uncased` achieving 99.9% accuracy across 5 core enterprise document classes (`Contract`, `Email`, `Invoice`, `Purchase Order`, `Report`).
-- **Grounded SLM Reasoning:** Local `Qwen/Qwen2.5-1.5B-Instruct` engine with strict negative restraint (*"Not Mentioned in Provided Context"*), zero conversational preambles, and stop-token hardening.
+- **Runtime LayoutLM Invoice Extraction:** Specialized token-classification inference via fine-tuned `MultiLabelLayoutLM` utilizing true token bounding boxes from PDF layouts (`PyMuPDF`) for 7 target invoice fields, paired with a generic schema-driven extraction pipeline for non-invoice fields.
 
 ---
 
 ## Technology Stack
 
 - **Frontend:** React 19, Vite 8, Vanilla CSS Design System with dark enterprise tokens and JetBrains Mono typography.
-- **Backend:** FastAPI, Python 3.11+, SQLAlchemy 2.0, Alembic, PostgreSQL 16, ChromaDB (HNSW cosine space).
-- **Agent & LLM Stack:**
-  - **Frontier Agent Orchestration:** Google GenAI Python SDK (`google-genai`), Gemini 3.5 Flash (`gemini-3.5-flash`), dynamic tool calling.
+- **Backend:** FastAPI, Python 3.11+, SQLAlchemy 2.0 (`Mapped` / `mapped_column`), Alembic, PostgreSQL 16, ChromaDB (HNSW cosine space).
+- **Agent & ML Stack:**
+  - **Single Frontier Generative LLM:** Google GenAI Python SDK (`google-genai`), Gemini 3.5 Flash (`gemini-3.5-flash`), performing autonomous tool selection, synthesis, calculations, and grounded document QA.
   - **Document Classification:** Fine-tuned `distilbert-base-uncased` (5 classes, exported checkpoint in `ml/models/distilbert_doc_classifier/final`).
+  - **Invoice Layout Extraction:** Fine-tuned `MultiLabelLayoutLM` (`microsoft/layoutlm-base-uncased` with 7-field token classifier in `ml/models/layoutlm_multilabel/final`), evaluated with true spatial bounding boxes.
   - **Dense Semantic Retrieval:** `BAAI/bge-small-en-v1.5` (384-dimensional embeddings, normalized cosine distance).
   - **Sparse Lexical Retrieval:** Rust-accelerated `BM25S` inverted index over 223K corpus passages.
-  - **Local Generative SLM:** `Qwen/Qwen2.5-1.5B-Instruct` for on-device context-grounded reasoning.
 - **Database & Storage:** PostgreSQL 16 (system of record for users and document metadata), ChromaDB (isolated chunk embeddings), local disk storage for binary files and extracted caches.
 
 ---
@@ -53,7 +53,7 @@ flowchart TD
         Agent[Hosted Gemini Agent Orchestrator<br/>google-genai SDK: gemini-3.5-flash]
         Tool1[classify_document<br/>DistilBERT 5-class]
         Tool2[retrieve_documents<br/>Hybrid BM25S + BGE-small + RRF]
-        Tool3[extract_document<br/>Dynamic Schema & Universal Table Parser]
+        Tool3[extract_document<br/>Specialized LayoutLM + Generic Schema Parser]
         Fallback[Local ChromaDB Grounded Fallback]
         
         Agent --> Tool1
@@ -79,7 +79,7 @@ flowchart TD
 
 1. **`classify_document(document_id, text)`**: Invokes the fine-tuned DistilBERT sequence classifier to categorize documents into Contract, Email, Invoice, Purchase Order, or Report.
 2. **`retrieve_documents(query, scope, top_k)`**: Executes hybrid sparse-dense retrieval across both the historical 223K passage corpus and user-uploaded ChromaDB embeddings, enforcing strict tenant scoping.
-3. **`extract_document(evidence, schema)`**: Parses unformatted plain text and ASCII table structures into validated fields matching dynamic Pydantic schemas.
+3. **`extract_document(evidence, schema)`**: Dispatches to fine-tuned `MultiLabelLayoutLM` for supported invoice fields using true spatial bounding boxes from PDF layouts (`PyMuPDF`), with schema-driven extraction for non-invoice and table fields.
 
 ---
 
@@ -114,8 +114,7 @@ DocuMind/
 │   │   ├── chroma_service.py           # Persistent ChromaDB vector client
 │   │   ├── document_ingestion.py       # Multi-format parser (PDF, DOCX, TXT, EML)
 │   │   ├── documind_service.py         # Adapter linking backend to local ML models
-│   │   ├── extraction.py               # Universal table parser & schema extractor
-│   │   ├── rag.py                      # Grounded Qwen2.5-1.5B reasoning engine
+│   │   ├── extraction.py               # LayoutLM & Schema-Driven Extraction Engine
 │   │   ├── retrieval.py                # Hybrid BM25S + BGE search with scope isolation
 │   │   └── uploaded_rag.py             # Upload lifecycle & isolated document QA
 │   ├── storage/                        # Persistent local document uploads & ChromaDB
@@ -126,13 +125,14 @@ DocuMind/
 │   ├── src/
 │   │   ├── api/                        # API client (documind.js)
 │   │   ├── components/                 # UI components (Header, QuerySection, etc.)
-│   │   ├── App.jsx                     # Root Studio Canvas layout (60/40 split)
+│   │   ├── App.jsx                     # Root Studio Canvas layout
 │   │   └── index.css                   # Minimal editorial styling tokens
 │   ├── package.json                    # Node dependencies and build scripts
 │   └── vite.config.js                  # Vite configuration
 ├── ml/                                 # Machine Learning Engineering Assets
 │   ├── models/                         # Model weights and checkpoint directories
-│   │   └── distilbert_doc_classifier/  # Fine-tuned DistilBERT 5-class sequence classifier
+│   │   ├── distilbert_doc_classifier/  # Fine-tuned DistilBERT 5-class sequence classifier
+│   │   └── layoutlm_multilabel/        # Fine-tuned LayoutLM 7-field invoice extractor
 │   ├── notebooks/                      # Exploratory data analysis & training notebooks
 │   ├── processed/                      # Pre-built search indices & dataset parquets
 │   └── src/                            # Local ML inference scripts (documind_agent.py)

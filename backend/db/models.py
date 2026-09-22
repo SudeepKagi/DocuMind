@@ -7,16 +7,16 @@ backend_packages = Path(__file__).resolve().parents[1] / "packages"
 if str(backend_packages) not in sys.path:
     sys.path.insert(0, str(backend_packages))
 
+from typing import Optional, List
 from sqlalchemy import (
     BigInteger,
-    Column,
     DateTime,
     ForeignKey,
     Index,
     Integer,
     String,
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from .database import Base
 
@@ -27,9 +27,9 @@ class User(Base):
     """
     __tablename__ = "users"
 
-    id = Column(String(64), primary_key=True, index=True)
-    email = Column(String(255), unique=True, index=True, nullable=False)
-    created_at = Column(
+    id: Mapped[str] = mapped_column(String(64), primary_key=True, index=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         nullable=False,
@@ -53,23 +53,23 @@ class Document(Base):
     """
     __tablename__ = "documents"
 
-    id = Column(String(64), primary_key=True, index=True)
-    user_id = Column(
+    id: Mapped[str] = mapped_column(String(64), primary_key=True, index=True)
+    user_id: Mapped[str] = mapped_column(
         String(64),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
-    filename = Column(String(255), nullable=False)
-    file_type = Column(String(32), nullable=False)
-    file_size = Column(BigInteger, nullable=False)
-    upload_time = Column(DateTime(timezone=True), nullable=False)
-    page_count = Column(Integer, nullable=True)
-    extraction_status = Column(String(32), default="processing", nullable=False)
-    chunk_count = Column(Integer, default=0, nullable=False)
-    storage_path = Column(String(512), nullable=False)
-    processed_path = Column(String(512), nullable=True)
-    created_at = Column(
+    filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    file_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    file_size: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    upload_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    page_count: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    extraction_status: Mapped[str] = mapped_column(String(32), default="processing", nullable=False)
+    chunk_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    storage_path: Mapped[str] = mapped_column(String(512), nullable=False)
+    processed_path: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         nullable=False,

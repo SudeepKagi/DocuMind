@@ -126,7 +126,7 @@ def search_endpoint(request: SearchRequest) -> Dict[str, Any]:
 @router.post("/qa", status_code=status.HTTP_200_OK)
 def qa_endpoint(request: DocumentRequest) -> Dict[str, Any]:
     """
-    Answer questions with grounded RAG using BGE retrieval and Qwen2.5-1.5B-Instruct.
+    Answer questions with grounded RAG using BGE/BM25 retrieval and Gemini reasoning.
     """
     if not request.question or not request.question.strip():
         raise HTTPException(

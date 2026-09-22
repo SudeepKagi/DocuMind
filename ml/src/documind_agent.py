@@ -8,7 +8,6 @@ from pathlib import Path
 from sentence_transformers import SentenceTransformer
 from transformers import (
     AutoTokenizer,
-    AutoModelForCausalLM,
     AutoModelForSequenceClassification,
 )
 
@@ -70,24 +69,6 @@ embedding_model = SentenceTransformer(
 
 
 # ------------------------------------------------------------
-# Qwen question-answering model
-# ------------------------------------------------------------
-
-QWEN_MODEL_NAME = "Qwen/Qwen2.5-1.5B-Instruct"
-
-qwen_tokenizer = AutoTokenizer.from_pretrained(
-    QWEN_MODEL_NAME
-)
-
-qwen_model = AutoModelForCausalLM.from_pretrained(
-    QWEN_MODEL_NAME,
-    torch_dtype=torch.float16
-).to(device)
-
-qwen_model.eval()
-
-
-# ------------------------------------------------------------
 # DistilBERT document classifier
 # ------------------------------------------------------------
 
@@ -107,7 +88,6 @@ classifier_model.eval()
 
 print("Models loaded successfully")
 print("BGE device:", embedding_model.device)
-print("Qwen device:", next(qwen_model.parameters()).device)
 print("Classifier device:", next(classifier_model.parameters()).device)
 print("Classes:", classifier_model.config.id2label)
 
@@ -194,13 +174,13 @@ def classify_document(question="", document_id=None, text=None):
             dim=-1
         )
 
-        predicted_id = torch.argmax(
+        predicted_id = int(torch.argmax(
             probabilities
-        ).item()
+        ).item())
 
-        confidence = probabilities[
+        confidence = float(probabilities[
             predicted_id
-        ].item()
+        ].item())
 
     predicted_class = classifier_model.config.id2label[
         predicted_id
@@ -564,92 +544,18 @@ def answer_question(question, top_k=3):
     # Build evidence
     # --------------------------------------------------------
 
-    evidence = ""
-
-    for i in range(len(contexts)):
-
-        evidence += (
-            f"\nSOURCE {i + 1}\n"
-            f"{contexts[i]['text'][:3000]}\n"
+    # --------------------------------------------------------
+    # Grounded Gemini Generation
+    # --------------------------------------------------------
+    try:
+        from services.agent import agent_service
+        answer = agent_service.answer_document_qa(
+            question=question,
+            context_chunks=contexts,
+            document_id=document_id,
         )
-
-    # --------------------------------------------------------
-    # Qwen prompt
-    # --------------------------------------------------------
-
-    prompt = f"""
-You are DocuMind, an enterprise document intelligence assistant.
-
-Answer the user's question using ONLY the evidence below.
-
-Rules:
-- Do not invent facts.
-- Do not copy raw OCR.
-- Ignore repeated OCR values.
-- Give a concise answer.
-- For explanation questions, summarize the important information.
-- For calculation questions, explain the calculation clearly.
-- Keep the answer between 2 and 4 sentences.
-
-Question:
-{question}
-
-Evidence:
-{evidence}
-
-Answer:
-"""
-
-    inputs = qwen_tokenizer(
-        prompt,
-        return_tensors="pt",
-        truncation=True,
-        max_length=4096
-    )
-
-    inputs = {
-        key: value.to(qwen_model.device)
-        for key, value in inputs.items()
-    }
-
-    with torch.no_grad():
-
-        output = qwen_model.generate(
-            **inputs,
-            max_new_tokens=120,
-            do_sample=False,
-            pad_token_id=qwen_tokenizer.eos_token_id
-        )
-
-    generated_tokens = output[
-        0,
-        inputs["input_ids"].shape[1]:
-    ]
-
-    answer = qwen_tokenizer.decode(
-        generated_tokens,
-        skip_special_tokens=True
-    ).strip()
-
-    # --------------------------------------------------------
-    # Remove incomplete trailing sentence
-    # --------------------------------------------------------
-
-    if answer and not answer.endswith(
-        (".", "!", "?")
-    ):
-
-        matches = list(
-            re.finditer(
-                r"[.!?]",
-                answer
-            )
-        )
-
-        if len(matches) > 0:
-            answer = answer[
-                :matches[-1].end()
-            ].strip()
+    except Exception as e:
+        answer = "Not Mentioned in Provided Context"
 
     return {
         "status": "success",
@@ -660,7 +566,7 @@ Answer:
             contexts[0]["score"],
             4
         ),
-        "method": "qwen_grounded_rag"
+        "method": "gemini_grounded_rag"
     }
 
 

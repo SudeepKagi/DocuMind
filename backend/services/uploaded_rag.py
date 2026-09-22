@@ -28,8 +28,6 @@ if str(ML_SRC) not in sys.path:
 try:
     from documind_agent import (
         embedding_model,
-        qwen_model,
-        qwen_tokenizer,
         device,
     )
     logger.info("Successfully linked to active DocuMind ML models for ChromaDB Uploaded RAG")
@@ -459,48 +457,25 @@ class UploadedDocumentRAGService:
                 "text": hit["text"][:350] + ("..." if len(hit["text"]) > 350 else ""),
             })
 
-        evidence_text = "\n".join(evidence_lines)
+        # 4b. Grounded Generation using Unified Gemini Agent
+        from .agent import agent_service
 
-        # 4b. Generalized Dynamic Task Execution Pipeline (5 Core Primitives)
-        from .agent import agent, Evidence
-
-        ev_objs = [
-            Evidence(
-                document_id=h["metadata"].get("document_id", ""),
-                filename=h["metadata"].get("filename", "Uploaded Document"),
-                page=h["metadata"].get("page", 1),
-                chunk_id=str(h["metadata"].get("chunk_id", i)),
-                source_text=h["text"],
-                score=h["score"],
-            )
+        context_chunks = [
+            {
+                "chunk_id": str(h["metadata"].get("chunk_id", i)),
+                "document_id": h["metadata"].get("document_id", ""),
+                "filename": h["metadata"].get("filename", "Uploaded Document"),
+                "page": h["metadata"].get("page", 1),
+                "text": h["text"],
+                "score": h["score"],
+            }
             for i, h in enumerate(deduped_hits)
         ]
 
-        executed_state = agent.run(
-            query=question,
-            user_id=user_id,
-            query_embedding=query_embedding,
-            document_id=document_id,
-            target_doc_ids=target_doc_ids,
-            initial_evidence=ev_objs,
-        )
-
-        if executed_state.final_answer:
-            logger.info("Generalized task execution successfully completed with answer length %d", len(executed_state.final_answer))
-            return {
-                "status": "success",
-                "question": question,
-                "answer": executed_state.final_answer,
-                "documents": list(unique_docs),
-                "sources": sources,
-            }
-
-        # 5. Delegate narrative synthesis to unified GroundedReasoningEngine
-        from .rag import reasoning_engine
-        answer = reasoning_engine.reason(
+        answer = agent_service.answer_document_qa(
             question=question,
-            context_text=evidence_text,
-            mode=q_type,
+            context_chunks=context_chunks,
+            document_id=document_id,
         )
 
         return {

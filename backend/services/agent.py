@@ -306,6 +306,7 @@ class AgentService:
 
         response = None
         last_error = None
+        chat: Optional[Any] = None
 
         for model_cand in candidate_models:
             try:
@@ -345,7 +346,7 @@ class AgentService:
                 last_error = e
                 logger.warning("Error with model %s: %s", model_cand, e)
 
-        if not response:
+        if not response or chat is None:
             logger.error("Gemini request failed across candidate models: %s", last_error)
             # Local Grounded Fallback: search ChromaDB / corpus directly
             try:
@@ -401,7 +402,6 @@ class AgentService:
                 "final_answer": "The document intelligence service is temporarily experiencing high traffic. Please retry in a few moments.",
             }
 
-
         final_text = response.text or ""
 
         # Extract execution trace and sources from chat history
@@ -410,17 +410,18 @@ class AgentService:
         sources: List[Dict[str, Any]] = []
         seen_source_chunks = set()
 
-        history = chat.get_history()
+        history = chat.get_history() if chat is not None else []
         for msg in history:
-            for part in msg.parts:
+            parts = getattr(msg, "parts", None) or []
+            for part in parts:
                 if hasattr(part, "function_call") and part.function_call:
-                    t_name = part.function_call.name
-                    if t_name not in tools_used:
-                        tools_used.append(t_name)
+                    t_name = getattr(part.function_call, "name", None)
+                    if t_name and str(t_name) not in tools_used:
+                        tools_used.append(str(t_name))
 
                 if hasattr(part, "function_response") and part.function_response:
-                    resp_dict = part.function_response.response
-                    t_name = part.function_response.name
+                    resp_dict = getattr(part.function_response, "response", {})
+                    t_name = getattr(part.function_response, "name", "tool")
 
                     card = {
                         "tool": t_name,
@@ -508,6 +509,72 @@ class AgentService:
             results=resp.get("results", []),
             status="COMPLETED",
         )
+
+    def answer_document_qa(
+        self,
+        question: str,
+        context_chunks: Union[List[Dict[str, Any]], str],
+        document_id: Optional[str] = None,
+    ) -> str:
+        """
+        Direct grounded question answering using Gemini with strict factual grounding and negative restraint.
+        Used for uploaded document QA and corpus-level QA.
+        """
+        if not context_chunks:
+            return "Not Mentioned in Provided Context"
+
+        evidence_blocks = []
+        if isinstance(context_chunks, str):
+            if context_chunks.strip():
+                evidence_blocks.append(context_chunks.strip())
+        else:
+            for i, c in enumerate(context_chunks):
+                txt = c.get("text", "").strip()
+                pg = c.get("page", 1)
+                cid = c.get("chunk_id", f"chunk_{i}")
+                if txt:
+                    evidence_blocks.append(f"--- EVIDENCE {i+1} (Page {pg}, ID: {cid}) ---\n{txt}")
+
+        if not evidence_blocks:
+            return "Not Mentioned in Provided Context"
+
+        prompt = (
+            f"You are DocuMind, an enterprise document intelligence assistant.\n"
+            f"Answer the user's question strictly using ONLY the provided evidence below.\n\n"
+            f"RULES:\n"
+            f"1. Strict Factual Grounding: Answer exclusively using facts present in the evidence. "
+            f"Do not invent facts, dates, amounts, or entities.\n"
+            f"2. If the requested information is not mentioned in the evidence, output ONLY: 'Not Mentioned in Provided Context'.\n"
+            f"3. Perform any required arithmetic, calculations, or comparisons directly from the numbers in the evidence.\n"
+            f"4. Be direct, concise, and clear.\n\n"
+            f"EVIDENCE:\n" + "\n\n".join(evidence_blocks) + "\n\n"
+            f"QUESTION: {question}\n\n"
+            f"ANSWER:"
+        )
+
+        client = self.get_client()
+        model_name = self.get_model_name()
+        try:
+            resp = client.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    temperature=0.05,
+                )
+            )
+            return (resp.text or "").strip()
+        except Exception as e:
+            logger.error("Gemini document QA error: %s", e)
+            try:
+                resp = client.models.generate_content(
+                    model="gemini-3.5-flash-lite",
+                    contents=prompt,
+                    config=types.GenerateContentConfig(temperature=0.05)
+                )
+                return (resp.text or "").strip()
+            except Exception as e2:
+                logger.error("Gemini fallback document QA error: %s", e2)
+                return "The document intelligence service is temporarily experiencing high traffic. Please retry in a few moments."
 
 
     orchestrate = run_agent

@@ -88,9 +88,9 @@ class ChromaService:
 
         self.collection.add(
             ids=ids,
-            embeddings=emb_list,
+            embeddings=emb_list,  # type: ignore[arg-type]
             documents=documents,
-            metadatas=metadatas,
+            metadatas=metadatas,  # type: ignore[arg-type]
         )
 
         logger.info(
@@ -100,6 +100,10 @@ class ChromaService:
             user_id,
         )
         return len(ids)
+
+    def get_collection(self) -> Any:
+        """Return the active ChromaDB collection instance."""
+        return self.collection
 
     def query_vectors(
         self,
@@ -123,7 +127,7 @@ class ChromaService:
 
         # Enforce multi-tenant user isolation
         if document_id:
-            where_filter = {
+            where_filter: Dict[str, Any] = {
                 "$and": [
                     {"user_id": user_id},
                     {"document_id": document_id},
@@ -136,7 +140,7 @@ class ChromaService:
             results = self.collection.query(
                 query_embeddings=[q_emb],
                 n_results=n_results,
-                where=where_filter,
+                where=where_filter,  # type: ignore[arg-type]
                 include=["documents", "metadatas", "distances"],
             )
         except Exception as e:
@@ -148,12 +152,15 @@ class ChromaService:
             return hits
 
         ids = results["ids"][0]
-        docs = results.get("documents", [[]])[0]
-        metas = results.get("metadatas", [[]])[0]
-        distances = results.get("distances", [[]])[0]
+        docs_list = results.get("documents") or []
+        docs = docs_list[0] if docs_list else []
+        metas_list = results.get("metadatas") or []
+        metas = metas_list[0] if metas_list else []
+        dist_list = results.get("distances") or []
+        distances = dist_list[0] if dist_list else []
 
         for i in range(len(ids)):
-            dist = float(distances[i]) if distances else 0.0
+            dist = float(distances[i]) if distances and i < len(distances) else 0.0
             # For cosine distance, similarity = 1.0 - distance
             score = round(max(0.0, 1.0 - dist), 4)
             hits.append({
@@ -170,13 +177,13 @@ class ChromaService:
         Remove all vectors belonging to a specific document and user.
         """
         try:
-            where_filter = {
+            where_filter: Dict[str, Any] = {
                 "$and": [
                     {"user_id": user_id},
                     {"document_id": document_id},
                 ]
             }
-            self.collection.delete(where=where_filter)
+            self.collection.delete(where=where_filter)  # type: ignore[arg-type]
             logger.info("Deleted vectors for document %s (user %s) from ChromaDB", document_id, user_id)
             return True
         except Exception as e:

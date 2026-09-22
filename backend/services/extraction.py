@@ -12,6 +12,7 @@ Enforces:
 
 import re
 import logging
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Type, Union
 from pydantic import BaseModel, Field
 
@@ -42,11 +43,11 @@ class LineItemsSchema(BaseModel):
         "item_number", "description", "quantity", "unit_price", "total_amount"
     ])
 
-    def __iter__(self):
-        return iter(self.items)
-
     def __len__(self):
         return len(self.items)
+
+    def __getitem__(self, idx: int) -> LineItem:
+        return self.items[idx]
 
 
 class CounterpartySchema(BaseModel):
@@ -871,12 +872,7 @@ class ExtractionEngine:
                         schema_name = "line_items"
                     else:
                         fields_to_extract.append(item)
-                elif isinstance(item, type) and issubclass(item, BaseModel):
-                    inst = item()
-                    fields_to_extract.extend(getattr(inst, "fields", []))
-                    if issubclass(item, LineItemsSchema):
-                        schema_name = "line_items"
-                elif isinstance(item, BaseModel):
+                if isinstance(item, BaseModel):
                     fields_to_extract.extend(getattr(item, "fields", []))
                     if isinstance(item, LineItemsSchema):
                         schema_name = "line_items"
@@ -905,7 +901,237 @@ class ExtractionEngine:
         return output
 
 
+# ========================================================
+# 4. Production MultiLabelLayoutLM Invoice Extractor
+# ========================================================
+
+LAYOUTLM_TARGET_FIELDS = [
+    "vendor_name",
+    "vendor_address",
+    "customer_billing_name",
+    "customer_billing_address",
+    "date_issue",
+    "amount_total_gross",
+    "amount_due",
+]
+
+
+class LayoutLMInvoiceSchema(BaseModel):
+    """Pydantic validated output for the 7 supervised invoice fields."""
+    vendor_name: Optional[str] = None
+    vendor_address: Optional[str] = None
+    customer_billing_name: Optional[str] = None
+    customer_billing_address: Optional[str] = None
+    date_issue: Optional[str] = None
+    amount_total_gross: Optional[str] = None
+    amount_due: Optional[str] = None
+
+
+class LayoutLMInvoiceExtractor:
+    """
+    Production runtime LayoutLM extractor for invoice documents.
+    Loads fine-tuned weights from ml/models/layoutlm_multilabel/final/model.safetensors.
+    Extracts true tokens and normalized bounding boxes (0-1000) using PyMuPDF.
+    Predicts token-level multi-label field probabilities with calibrated thresholds.
+    """
+    def __init__(self, model_dir: Optional[Union[str, Path]] = None):
+        self.root_dir = Path(__file__).resolve().parents[2]
+        if model_dir:
+            self.model_dir = Path(model_dir)
+        else:
+            self.model_dir = self.root_dir / "ml" / "models" / "layoutlm_multilabel" / "final"
+
+        self.thresholds_path = self.model_dir / "field_thresholds.json"
+        self.weights_path = self.model_dir / "model.safetensors"
+
+        self.target_fields = LAYOUTLM_TARGET_FIELDS
+        self._model: Optional[Any] = None
+        self._tokenizer: Optional[Any] = None
+        self._thresholds: Dict[str, float] = {}
+
+    def _load_model(self):
+        if self._model is not None:
+            return
+
+        if not self.model_dir.exists() or not self.weights_path.exists():
+            raise FileNotFoundError(f"LayoutLM checkpoint not found at: {self.model_dir}")
+
+        import json
+        import torch
+        import torch.nn as nn
+        from transformers import LayoutLMModel, LayoutLMTokenizerFast
+        from safetensors.torch import load_file
+
+        # Load calibrated thresholds
+        if self.thresholds_path.exists():
+            with open(self.thresholds_path, "r", encoding="utf-8") as f:
+                self._thresholds = json.load(f)
+        else:
+            self._thresholds = {f: 0.90 for f in self.target_fields}
+
+        class MultiLabelLayoutLM(nn.Module):
+            def __init__(self, model_name: str = "microsoft/layoutlm-base-uncased", num_labels: int = 7):
+                super().__init__()
+                self.layoutlm = LayoutLMModel.from_pretrained(model_name)
+                self.dropout = nn.Dropout(self.layoutlm.config.hidden_dropout_prob)
+                self.classifier = nn.Linear(self.layoutlm.config.hidden_size, num_labels)
+
+            def forward(self, input_ids=None, attention_mask=None, bbox=None):
+                outputs = self.layoutlm(input_ids=input_ids, attention_mask=attention_mask, bbox=bbox)
+                sequence_output = self.dropout(outputs.last_hidden_state)
+                logits = self.classifier(sequence_output)
+                return logits
+
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        logger.info("Loading fine-tuned MultiLabelLayoutLM from %s on %s...", self.model_dir, device)
+        model = MultiLabelLayoutLM(num_labels=len(self.target_fields))
+        state_dict = load_file(str(self.weights_path))
+        model.load_state_dict(state_dict, strict=False)
+        model.to(device)
+        model.eval()
+
+        self._model = model
+        self._tokenizer = LayoutLMTokenizerFast.from_pretrained(str(self.model_dir))
+        self._device = device
+        logger.info("MultiLabelLayoutLM runtime extractor successfully loaded.")
+
+    def extract_from_pdf(self, pdf_path_or_bytes: Union[str, Path, bytes]) -> Dict[str, Any]:
+        """
+        Runs true layout-aware inference on an invoice PDF:
+        PDF -> Page layout -> PyMuPDF OCR/words -> [x0, y0, x1, y1] normalized to 0-1000 ->
+        LayoutLM forward pass -> Field thresholding -> Pydantic validation -> Structured Result.
+        """
+        import pymupdf
+        import numpy as np
+        import torch
+
+        try:
+            self._load_model()
+        except Exception as e:
+            logger.error("Failed to load LayoutLM model: %s", e)
+            return {
+                "status": "error",
+                "error": f"LayoutLM model loading failed: {e}",
+                "fields": {},
+            }
+
+        # Open document with PyMuPDF
+        try:
+            if isinstance(pdf_path_or_bytes, bytes):
+                doc = pymupdf.open(stream=pdf_path_or_bytes, filetype="pdf")
+            else:
+                doc = pymupdf.open(str(pdf_path_or_bytes))
+        except Exception as e:
+            logger.error("Could not open PDF with PyMuPDF: %s", e)
+            return {
+                "status": "error",
+                "error": f"Invalid PDF file: {e}",
+                "fields": {},
+            }
+
+        if self._tokenizer is None or self._model is None:
+            return {
+                "status": "error",
+                "error": "LayoutLM tokenizer or model not initialized.",
+                "fields": {},
+            }
+
+        words: List[str] = []
+        word_boxes: List[List[int]] = []
+
+        # Extract tokens and true bounding boxes normalized to 0-1000
+        for page in doc:
+            rect = page.rect
+            w, h = float(max(1.0, rect.width)), float(max(1.0, rect.height))
+            page_words = page.get_text("words")
+            for item in page_words:
+                x0, y0, x1, y1 = float(item[0]), float(item[1]), float(item[2]), float(item[3])
+                text = str(item[4])
+                norm_x0 = int(max(0, min(1000, (x0 / w) * 1000)))
+                norm_y0 = int(max(0, min(1000, (y0 / h) * 1000)))
+                norm_x1 = int(max(0, min(1000, (x1 / w) * 1000)))
+                norm_y1 = int(max(0, min(1000, (y1 / h) * 1000)))
+                words.append(text)
+                word_boxes.append([norm_x0, norm_y0, norm_x1, norm_y1])
+
+        doc.close()
+
+        if not words:
+            return {
+                "status": "empty",
+                "message": "No text or layout tokens found in PDF.",
+                "fields": LayoutLMInvoiceSchema().model_dump(),
+            }
+
+        # Tokenize with LayoutLM fast tokenizer using sliding window chunks
+        encoded = self._tokenizer(
+            words,
+            boxes=word_boxes,
+            is_split_into_words=True,
+            return_overflowing_tokens=True,
+            truncation=True,
+            max_length=256,
+            stride=128,
+            padding="max_length",
+            return_tensors="pt",
+        )
+
+        all_word_probs = np.zeros((len(words), len(self.target_fields)), dtype=np.float32)
+
+        for chunk_idx in range(len(encoded["input_ids"])):
+            input_ids = encoded["input_ids"][chunk_idx].unsqueeze(0).to(self._device)
+            attention_mask = encoded["attention_mask"][chunk_idx].unsqueeze(0).to(self._device)
+            word_ids = encoded.word_ids(batch_index=chunk_idx)
+            chunk_bboxes = []
+            for widx in word_ids:
+                if widx is None:
+                    chunk_bboxes.append([0, 0, 0, 0])
+                else:
+                    chunk_bboxes.append(word_boxes[widx])
+            bbox = torch.tensor(chunk_bboxes, dtype=torch.long).unsqueeze(0).to(self._device)
+
+            with torch.no_grad():
+                logits = self._model(input_ids=input_ids, attention_mask=attention_mask, bbox=bbox)
+            probs = torch.sigmoid(logits)[0].cpu().numpy()
+
+            for token_idx, widx in enumerate(word_ids):
+                if widx is not None:
+                    all_word_probs[widx] = np.maximum(all_word_probs[widx], probs[token_idx])
+
+        # Decode fields using field thresholds
+        raw_fields: Dict[str, Optional[str]] = {}
+        confidence_scores: Dict[str, float] = {}
+
+        for i, field in enumerate(self.target_fields):
+            thresh = self._thresholds.get(field, 0.90)
+            matched_indices = [idx for idx, p in enumerate(all_word_probs[:, i]) if p >= thresh]
+            if matched_indices:
+                raw_fields[field] = " ".join(words[idx] for idx in matched_indices)
+                confidence_scores[field] = float(np.mean([all_word_probs[idx, i] for idx in matched_indices]))
+            else:
+                # Top candidate if within reasonable proximity (>= 0.50)
+                max_idx = int(np.argmax(all_word_probs[:, i]))
+                max_prob = float(all_word_probs[max_idx, i])
+                if max_prob >= 0.50:
+                    raw_fields[field] = words[max_idx]
+                    confidence_scores[field] = max_prob
+                else:
+                    raw_fields[field] = None
+                    confidence_scores[field] = 0.0
+
+        validated = LayoutLMInvoiceSchema(**raw_fields)
+
+        return {
+            "status": "success",
+            "model": "MultiLabelLayoutLM",
+            "token_count": len(words),
+            "fields": validated.model_dump(),
+            "confidences": confidence_scores,
+        }
+
+
 extraction_engine = ExtractionEngine()
+layoutlm_extractor = LayoutLMInvoiceExtractor()
 
 
 def extract_document(
@@ -916,11 +1142,72 @@ def extract_document(
     Standard DocuMind tool exposed to Gemini Agent:
     extract_document(evidence, schema)
 
-    The schema is supplied dynamically by Gemini, e.g.:
-    {"vendor_name": "string", "invoice_total": "number"} or
-    {"iban": "string", "swift_code": "string"} or
-    {"project_budget": "number", "actual_spend": "number"}
+    Dispatches between:
+    1. Specialized LayoutLM Path: Invoked for the 7 supervised invoice fields
+       (vendor_name, vendor_address, customer_billing_name, customer_billing_address,
+        date_issue, amount_total_gross, amount_due) when an invoice PDF document is available.
+    2. Generic Schema-Driven Path: Invoked for general structured key-value extraction,
+       line-item tables, or non-PDF text evidence.
     """
     if not evidence or not evidence.strip():
         return {}
+
+    # Check requested fields
+    requested_fields: List[str] = []
+    if isinstance(schema, str):
+        requested_fields = [schema.lower().strip()]
+    elif isinstance(schema, list):
+        requested_fields = [str(f).lower().strip() for f in schema if isinstance(f, str)]
+    elif isinstance(schema, dict):
+        requested_fields = [str(k).lower().strip() for k in schema.keys()]
+
+    invoice_fields_present = any(f in LAYOUTLM_TARGET_FIELDS for f in requested_fields)
+
+    # If invoice fields are requested, check if a PDF is referenced or exists on disk
+    if invoice_fields_present:
+        pdf_path = None
+        # Check if evidence contains a PDF file path
+        path_matches = re.findall(r"([A-Za-z0-9_\\/.:-]+\.pdf)", evidence, re.IGNORECASE)
+        for p in path_matches:
+            cand = Path(p)
+            if cand.is_file():
+                pdf_path = cand
+                break
+
+        # Check if evidence contains a doc_id (e.g., doc_5da0915b)
+        if not pdf_path:
+            doc_id_match = re.search(r"\b(doc_[a-f0-9]{8})\b", evidence, re.IGNORECASE)
+            if doc_id_match:
+                doc_id = doc_id_match.group(1).lower()
+                backend_dir = Path(__file__).resolve().parents[1]
+                uploads_dir = backend_dir / "storage" / "uploads"
+                if uploads_dir.is_dir():
+                    for f in uploads_dir.glob(f"{doc_id}*.pdf"):
+                        pdf_path = f
+                        break
+
+        # If a valid invoice PDF is available, run LayoutLM specialized inference!
+        if pdf_path and pdf_path.is_file():
+            logger.info("Invoking specialized LayoutLM model on invoice PDF: %s", pdf_path)
+            layout_result = layoutlm_extractor.extract_from_pdf(pdf_path)
+            if layout_result.get("status") == "success":
+                extracted_fields = layout_result.get("fields", {})
+                # Filter to requested fields if specific fields were asked
+                result_fields: Dict[str, Any] = {}
+                for k, v in extracted_fields.items():
+                    if not requested_fields or k in requested_fields:
+                        if v is not None:
+                            result_fields[k] = v
+
+                # Also run generic extraction for any remaining fields (e.g. line_items, items)
+                non_invoice_fields = [f for f in requested_fields if f not in LAYOUTLM_TARGET_FIELDS]
+                if non_invoice_fields or any(f in ("line_items", "table") for f in requested_fields):
+                    generic_res = extraction_engine.extract(evidence_text=evidence, schema=schema)
+                    for k, v in generic_res.items():
+                        if k not in result_fields:
+                            result_fields[k] = v
+
+                return result_fields
+
+    # Generic Schema-Driven Extraction Path
     return extraction_engine.extract(evidence_text=evidence, schema=schema)

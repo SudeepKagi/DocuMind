@@ -40,7 +40,8 @@ async def lifespan(app: FastAPI):
     try:
         db = SessionLocal()
         user = get_or_create_dev_user(db)
-        logger.info("Database connected. Active dev user: %s (%s)", user.id, user.email)
+        if user:
+            logger.info("Database connected. Active dev user: %s (%s)", user.id, user.email)
         db.close()
     except Exception as e:
         logger.warning("Database startup check warning: %s", e)
@@ -49,7 +50,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="DocuMind API",
-    description="Enterprise Document Intelligence API powered by DistilBERT, BGE, BM25, and Qwen",
+    description="Enterprise Document Intelligence API powered by DistilBERT, BGE, BM25, LayoutLM, and Gemini",
     version="1.0.0",
     lifespan=lifespan,
 )

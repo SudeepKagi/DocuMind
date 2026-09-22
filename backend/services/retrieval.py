@@ -507,10 +507,9 @@ def retrieve_documents(
         # Check ChromaDB uploaded documents by filename keyword matching
         if not doc_id:
             try:
-                from .chroma_service import chroma_service
                 if chroma_service.collection is not None:
                     data = chroma_service.collection.get(include=["metadatas"])
-                    metadatas = data.get("metadatas", [])
+                    metadatas = data.get("metadatas") or []
                     q_lower = query.lower()
                     best_match_id = None
                     best_overlap = 0
@@ -545,8 +544,8 @@ def retrieve_documents(
             query=query,
             query_embedding=query_emb,
             user_id=user_id,
-            scope={"doc_id": doc_id, "source_type": "uploaded"},
-            document_id=doc_id,
+            scope={"doc_id": str(doc_id), "source_type": "uploaded"},
+            document_id=str(doc_id),
             top_k=effective_k,
         )
 

@@ -19,8 +19,6 @@ try:
         extract_metadata,
         search_documents,
         answer_question,
-        qwen_model,
-        qwen_tokenizer,
         embedding_model,
     )
     logger.info("Successfully imported DocuMind ML agent from %s", ML_SRC)
@@ -31,17 +29,8 @@ except ImportError as e:
 
 class DocuMindService:
     """
-    Application service wrapper around the existing DocuMind ML/Agent system.
-    Strictly preserves existing ML/Agent logic and response contracts.
+    Application service wrapper around the DocuMind ML/Agent system.
     """
-
-    @property
-    def qwen_model(self):
-        return qwen_model
-
-    @property
-    def qwen_tokenizer(self):
-        return qwen_tokenizer
 
     @property
     def embedding_model(self):
@@ -85,6 +74,8 @@ class DocuMindService:
             }
         return extract_metadata(cleaned_question)
 
+    extract_metadata = extract
+
     @staticmethod
     def search(question: str, top_k: int = 5) -> Dict[str, Any]:
         """Perform hybrid BM25 + BGE semantic search or exact enumeration."""
@@ -100,7 +91,7 @@ class DocuMindService:
 
     @staticmethod
     def qa(question: str) -> Dict[str, Any]:
-        """Grounded question answering with retrieval and Qwen."""
+        """Grounded question answering with retrieval and Gemini."""
         cleaned_question = question.strip()
         if not cleaned_question:
             return {

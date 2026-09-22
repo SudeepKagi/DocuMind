@@ -52,14 +52,14 @@ def run_uploaded_rag_evaluation() -> Dict[str, Any]:
 
     import chromadb
     from sentence_transformers import SentenceTransformer
-    from documind_agent import qwen_model, qwen_tokenizer, device
+    from backend.services.agent import agent_service
 
     # Connect to ChromaDB
     chroma_client = chromadb.PersistentClient(path=str(PROJECT_ROOT / "backend" / "storage" / "chroma"))
     collection = chroma_client.get_collection("documind_documents")
     logger.info("Connected to ChromaDB collection with %d items", collection.count())
 
-    bge_model = SentenceTransformer("BAAI/bge-small-en-v1.5", device=device)
+    bge_model = SentenceTransformer("BAAI/bge-small-en-v1.5", device="cpu")
 
     per_query_results = []
     retrieval_recalls = []
@@ -69,13 +69,13 @@ def run_uploaded_rag_evaluation() -> Dict[str, Any]:
     latencies_ms = []
 
     for item in benchmarks:
-        q_id = item["id"]
+        qid = item["id"]
         question = item["question"]
-        target_doc_ids = set(item["target_doc_ids"])
         expected_ans = item["expected_answer"]
-        expected_keywords = [kw.lower() for kw in item["expected_answer_keywords"]]
+        target_doc_ids = item.get("target_doc_ids", [])
+        expected_keywords = item.get("expected_keywords", item.get("expected_answer_keywords", []))
 
-        logger.info("Evaluating [%s]: '%s'...", q_id, question)
+        logger.info("Evaluating [%s]: '%s'...", qid, question)
 
         # 1. Retrieval Phase
         t0 = time.perf_counter()
@@ -91,9 +91,11 @@ def run_uploaded_rag_evaluation() -> Dict[str, Any]:
 
         retrieved_docs = []
         retrieved_doc_ids = []
-        if query_results and query_results.get("documents") and len(query_results["documents"][0]) > 0:
-            docs = query_results["documents"][0]
-            metas = query_results["metadatas"][0]
+        doc_lists = query_results.get("documents") if query_results else None
+        meta_lists = query_results.get("metadatas") if query_results else None
+        if doc_lists and meta_lists and len(doc_lists) > 0 and len(doc_lists[0]) > 0:
+            docs = doc_lists[0]
+            metas = meta_lists[0]
             for i in range(len(docs)):
                 doc_id = metas[i].get("document_id", "")
                 fname = metas[i].get("filename", "")
@@ -102,29 +104,9 @@ def run_uploaded_rag_evaluation() -> Dict[str, Any]:
 
         evidence_text = "\n\n".join(retrieved_docs)
 
-        # 2. Generation Phase with Qwen2.5-1.5B
+        # 2. Generation Phase with unified Gemini LLM
         t1 = time.perf_counter()
-        prompt = f"""You are DocuMind, an enterprise document intelligence assistant.
-Answer the following question using ONLY the provided evidence. Be concise, precise, and factual.
-
-Evidence:
-{evidence_text}
-
-Question:
-{question}
-
-Answer:
-"""
-        inputs = qwen_tokenizer(prompt, return_tensors="pt").to(device)
-        with torch.no_grad():
-            output_tokens = qwen_model.generate(
-                **inputs,
-                max_new_tokens=150,
-                do_sample=False,
-                repetition_penalty=1.1,
-                pad_token_id=qwen_tokenizer.eos_token_id,
-            )
-        generated_answer = qwen_tokenizer.decode(output_tokens[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True).strip()
+        generated_answer = agent_service.answer_document_qa(question, context_chunks=evidence_text)
         t_gen = (time.perf_counter() - t1) * 1000.0
         total_time_ms = t_ret + t_gen
 
@@ -147,7 +129,7 @@ Answer:
         latencies_ms.append(total_time_ms)
 
         per_query_results.append({
-            "id": q_id,
+            "id": qid,
             "question": question,
             "file_type": item["file_type"],
             "query_scope": item["query_scope"],
@@ -167,7 +149,7 @@ Answer:
         "benchmark": "uploaded_document_rag",
         "vector_store": "ChromaDB (cosine similarity index)",
         "embedding_model": "BAAI/bge-small-en-v1.5",
-        "llm_model": "Qwen/Qwen2.5-1.5B-Instruct",
+        "llm_model": "Google Gemini (gemini-2.5-flash)",
         "total_queries_evaluated": len(benchmarks),
         "supported_file_types_tested": ["PDF", "DOCX", "TXT", "EML"],
         "metrics": {

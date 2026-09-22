@@ -96,7 +96,7 @@ def run_all():
         logger.info("\n>>> [4/6] Running Grounded RAG QA Evaluation...")
         res4 = run_rag_evaluation()
         summary["components"]["rag_qa"] = {
-            "model": "Qwen2.5-1.5B-Instruct",
+            "model": "Google Gemini (gemini-2.5-flash)",
             "total_questions": res4["total_benchmark_questions"],
             "retrieval_hit_rate": res4["metrics"]["retrieval_hit_rate"],
             "citation_grounding_accuracy": res4["metrics"]["citation_grounding_accuracy"],

@@ -187,17 +187,24 @@ class DocumentIngestionService:
 
                     if content_type == "text/plain" and "attachment" not in content_disposition:
                         payload = part.get_payload(decode=True)
-                        if payload:
+                        if isinstance(payload, bytes):
                             body_parts.append(payload.decode(errors="replace"))
+                        elif isinstance(payload, str):
+                            body_parts.append(payload)
                     elif content_type == "text/html" and not body_parts and "attachment" not in content_disposition:
                         payload = part.get_payload(decode=True)
-                        if payload:
+                        if isinstance(payload, bytes):
                             text = re.sub(r"<[^>]+>", " ", payload.decode(errors="replace"))
+                            body_parts.append(text)
+                        elif isinstance(payload, str):
+                            text = re.sub(r"<[^>]+>", " ", payload)
                             body_parts.append(text)
             else:
                 payload = msg.get_payload(decode=True)
-                if payload:
+                if isinstance(payload, bytes):
                     body_parts.append(payload.decode(errors="replace"))
+                elif isinstance(payload, str):
+                    body_parts.append(payload)
 
             body = "\n\n".join(body_parts)
 

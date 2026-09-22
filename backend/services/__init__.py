@@ -1,10 +1,18 @@
 """
-Consolidated backend services for DocuMind W.
-Uses PEP 562 lazy attribute loading so that importing lightweight modules (extraction,
-calculation, retrieval) or running tests does not eagerly instantiate heavy GPU ML models.
+Consolidated backend services for DocuMind.
+Uses PEP 562 lazy attribute loading so that importing lightweight modules
+or running tests does not eagerly instantiate heavy GPU ML models.
 """
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from .documind_service import documind_service, DocuMindService
+    from .document_ingestion import DocumentIngestionService
+    from .uploaded_rag import uploaded_rag_service, UploadedDocumentRAGService
+    from .agent import agent_service, AgentService, classify_document
+    from .retrieval import retrieval_engine, RetrievalEngine, retrieve_documents
+    from .extraction import extraction_engine, ExtractionEngine, extract_document
 
 __all__ = [
     "documind_service",
@@ -12,8 +20,7 @@ __all__ = [
     "DocumentIngestionService",
     "uploaded_rag_service",
     "UploadedDocumentRAGService",
-    "agent",
-    "gemini_agent",
+    "agent_service",
     "AgentService",
     "retrieval_engine",
     "RetrievalEngine",
@@ -22,8 +29,6 @@ __all__ = [
     "ExtractionEngine",
     "extract_document",
     "classify_document",
-    "reasoning_engine",
-    "GroundedReasoningEngine",
 ]
 
 
@@ -37,7 +42,7 @@ def __getattr__(name: str) -> Any:
     elif name in ("uploaded_rag_service", "UploadedDocumentRAGService"):
         from .uploaded_rag import uploaded_rag_service, UploadedDocumentRAGService
         return uploaded_rag_service if name == "uploaded_rag_service" else UploadedDocumentRAGService
-    elif name in ("agent", "gemini_agent", "AgentService"):
+    elif name in ("agent", "gemini_agent", "agent_service", "AgentService"):
         from .agent import agent_service
         return agent_service
     elif name in ("retrieval_engine", "RetrievalEngine"):
@@ -55,9 +60,6 @@ def __getattr__(name: str) -> Any:
     elif name == "classify_document":
         from .agent import classify_document
         return classify_document
-    elif name in ("reasoning_engine", "GroundedReasoningEngine"):
-        from .rag import reasoning_engine, GroundedReasoningEngine
-        return reasoning_engine if name == "reasoning_engine" else GroundedReasoningEngine
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 

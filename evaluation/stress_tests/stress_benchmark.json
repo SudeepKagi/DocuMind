@@ -1,0 +1,205 @@
+[
+  {
+    "id": "stress_A1",
+    "category": "Category A — Tool Chaining & Compound Execution",
+    "prompt_id": "A",
+    "query": "Extract the line items, calculate the effective tax rate per item, and tell me if the subtotal reflects a pre-tax or post-discount value.",
+    "expected_capabilities": ["extraction", "calculation"],
+    "expected_line_items_count": 5,
+    "expected_effective_tax_rate": 7.8375,
+    "expected_subtotal_semantics": "PRE_TAX_PRE_DISCOUNT",
+    "expected_answer_keywords": ["Cloud Infrastructure", "7,000.00", "7.8375%", "20,000.00", "pre-tax", "1,567.50"]
+  },
+  {
+    "id": "stress_A2_paraphrase",
+    "category": "Category A — Paraphrased Compound Execution",
+    "prompt_id": "A",
+    "query": "Can you parse every itemized deliverable from the table, compute what percentage of tax applies effectively to each, and verify whether the subtotal is calculated before taxes and discounts?",
+    "expected_capabilities": ["extraction", "calculation"],
+    "expected_line_items_count": 5,
+    "expected_effective_tax_rate": 7.8375,
+    "expected_subtotal_semantics": "PRE_TAX_PRE_DISCOUNT",
+    "expected_answer_keywords": ["7.8375%", "20,000.00", "5 line items", "pre-tax"]
+  },
+  {
+    "id": "stress_B1",
+    "category": "Category A — Conversational Masking",
+    "prompt_id": "B",
+    "query": "Hey, I think there's a discrepancy in what we owe this vendor compared to our standard terms—what's the IBAN and penalty rate?",
+    "expected_capabilities": ["extraction", "reasoning"],
+    "expected_fields": ["iban", "penalty_rate"],
+    "expected_iban_state": "NOT_PROVIDED",
+    "expected_answer_keywords": ["Not Provided", "1.5%", "penalty rate", "late settlement"]
+  },
+  {
+    "id": "stress_B2_paraphrase",
+    "category": "Category A — Conversational Masking Paraphrase",
+    "prompt_id": "B",
+    "query": "Please check if our payment to the contractor has an issue with terms, specifically what is their IBAN and the late payment penalty fee?",
+    "expected_capabilities": ["extraction", "reasoning"],
+    "expected_fields": ["iban", "penalty_rate"],
+    "expected_iban_state": "NOT_PROVIDED",
+    "expected_answer_keywords": ["Not Provided", "1.5%"]
+  },
+  {
+    "id": "stress_C1",
+    "category": "Category A — Multi-Intent Classification & Extraction",
+    "prompt_id": "C",
+    "query": "Is this an invoice, a credit memo, or a purchase order, and which counterparty is issuing the charges?",
+    "expected_capabilities": ["classification", "extraction"],
+    "expected_classification": "Invoice",
+    "expected_issuer": "Nexus Global Dynamics LLC",
+    "expected_answer_keywords": ["Invoice", "Nexus Global Dynamics LLC"]
+  },
+  {
+    "id": "stress_C2_paraphrase",
+    "category": "Category A — Multi-Intent Paraphrase",
+    "prompt_id": "C",
+    "query": "What type of billing record is this (e.g. invoice or PO) and who is the vendor billing us?",
+    "expected_capabilities": ["classification", "extraction"],
+    "expected_classification": "Invoice",
+    "expected_issuer": "Nexus Global Dynamics LLC",
+    "expected_answer_keywords": ["Invoice", "Nexus Global Dynamics LLC"]
+  },
+  {
+    "id": "stress_D1",
+    "category": "Category B — Relative Tabular Item Targeting",
+    "prompt_id": "D",
+    "query": "What is the exact unit price and extended subtotal for the third line item listed in the deliverables table?",
+    "expected_capabilities": ["extraction"],
+    "expected_item_number": "03",
+    "expected_unit_rate": 150.00,
+    "expected_extended_total": 4800.00,
+    "expected_answer_keywords": ["High-Throughput API Gateway", "150.00", "4,800.00"]
+  },
+  {
+    "id": "stress_D2_paraphrase",
+    "category": "Category B — Relative Tabular Item Paraphrase",
+    "prompt_id": "D",
+    "query": "Tell me the rate and total price for item #3 in the invoice table.",
+    "expected_capabilities": ["extraction"],
+    "expected_item_number": "03",
+    "expected_unit_rate": 150.00,
+    "expected_extended_total": 4800.00,
+    "expected_answer_keywords": ["API Gateway", "150.00", "4,800.00"]
+  },
+  {
+    "id": "stress_E1",
+    "category": "Category B — Spatial Address Differentiation",
+    "prompt_id": "E",
+    "query": "What is the physical address where payment must be mailed versus the recipient address of the services?",
+    "expected_capabilities": ["extraction"],
+    "expected_remittance_keywords": ["500 Financial Way", "18th Floor", "New York", "NY 10005"],
+    "expected_recipient_keywords": ["100 Tech Park Boulevard", "Suite 450", "San Jose", "CA 95110"],
+    "expected_answer_keywords": ["Financial Way", "New York", "Tech Park Boulevard", "San Jose"]
+  },
+  {
+    "id": "stress_F1",
+    "category": "Category B — Trade Discount Semantics",
+    "prompt_id": "F",
+    "query": "Extract the trade discount amount, its deduction percentage, and verify which line item it was applied against.",
+    "expected_capabilities": ["extraction", "calculation"],
+    "expected_discount_percentage": 5.0,
+    "expected_discount_amount": 1000.00,
+    "expected_answer_keywords": ["5%", "1,000.00", "Contract Partner Discount", "subtotal"]
+  },
+  {
+    "id": "stress_G1",
+    "category": "Category C — Alphanumeric Exact Identifier Search",
+    "prompt_id": "G",
+    "query": "Show me records mentioning transaction reference INV-2026-8842-X.",
+    "expected_capabilities": ["retrieval", "reasoning"],
+    "exact_token": "INV-2026-8842-X",
+    "expected_answer_keywords": ["INV-2026-8842-X", "Nexus Global Dynamics", "20,567.50"]
+  },
+  {
+    "id": "stress_H1",
+    "category": "Category C — Legal Clause Retrieval",
+    "prompt_id": "H",
+    "query": "Find the clause describing what occurs if settlement is delayed past the agreed grace period.",
+    "expected_capabilities": ["extraction", "reasoning"],
+    "expected_answer_keywords": ["Payment Terms & Conditions", "1.5% per month", "overdue amounts", "thirty (30) calendar days"]
+  },
+  {
+    "id": "stress_I1",
+    "category": "Category C — Anti-Premise Echoing & Cross-Field Binding",
+    "prompt_id": "I",
+    "query": "Which purchase order authorized the wire transfer routing code 021000021?",
+    "expected_capabilities": ["extraction", "reasoning"],
+    "exact_token": "021000021",
+    "anti_premise_prohibition": "The purchase order that authorized",
+    "expected_answer_keywords": ["021000021", "Not Found", "routing", "purchase order"]
+  },
+  {
+    "id": "stress_J1",
+    "category": "Category D — Deterministic Reconciliation",
+    "prompt_id": "J",
+    "query": "Sum all individual item totals, subtract the discount, add the line-item tax, and tell me if the computed sum matches the grand total printed at the bottom.",
+    "expected_capabilities": ["extraction", "calculation"],
+    "expected_sum_items": 20000.00,
+    "expected_discount": 1000.00,
+    "expected_tax": 1567.50,
+    "expected_total_due": 20567.50,
+    "expected_reconciliation_status": "MATCH",
+    "expected_answer_keywords": ["MATCH", "20,000.00", "1,000.00", "1,567.50", "20,567.50"]
+  },
+  {
+    "id": "stress_K1",
+    "category": "Category D — Strict Negative Restraint (Hallucination Control)",
+    "prompt_id": "K",
+    "query": "Which bank branch address is specified for international SWIFT transactions? Answer ONLY using information explicitly stated in the text; state 'Not Provided' if missing.",
+    "expected_capabilities": ["extraction", "reasoning"],
+    "expected_answer_state": "NOT_PROVIDED",
+    "prohibited_hallucinations": ["Wall Street", "Manhattan", "New York Branch"],
+    "expected_answer_keywords": ["Not Provided"]
+  },
+  {
+    "id": "stress_L1",
+    "category": "Category D — Temporal Reasoning & Net Terms",
+    "prompt_id": "L",
+    "query": "If this invoice was issued on the date listed, and standard Net-30 terms apply, what is the exact calendar date payment becomes overdue, taking into account any explicit dispute notification period?",
+    "expected_capabilities": ["calculation"],
+    "expected_issue_date": "21 Sep 2026",
+    "expected_due_date": "21 Oct 2026",
+    "expected_overdue_date": "21 Oct 2026",
+    "expected_dispute_deadline": "28 Sep 2026",
+    "expected_answer_keywords": ["21 Sep 2026", "21 Oct 2026", "Net 30", "5 business days", "overdue"]
+  },
+  {
+    "id": "stress_M1_novel",
+    "category": "Category E — Novel Unseen Query: Charges & Tax Percentage",
+    "prompt_id": "M",
+    "query": "List the charges included in this invoice and compute their effective tax percentages.",
+    "expected_capabilities": ["extraction", "calculation"],
+    "expected_answer_keywords": ["7.8375%", "Cloud Infrastructure", "20,000.00"]
+  },
+  {
+    "id": "stress_N1_novel",
+    "category": "Category E — Novel Unseen Query: Bank Instructions & Late Penalty",
+    "prompt_id": "N",
+    "query": "Give me the bank information and contractual late-payment penalty.",
+    "expected_capabilities": ["extraction", "reasoning"],
+    "expected_answer_keywords": ["021000021", "1.5%", "penalty"]
+  },
+  {
+    "id": "stress_O1_sla",
+    "category": "Category F — SLA Tier Interval & Credit Calculation",
+    "prompt_id": "O",
+    "query": "Our uptime was 98.4% this month. Look up the SLA tier, calculate the service credit percentage, and determine the net payable on our $22,500 commitment fee.",
+    "expected_capabilities": ["calculation"],
+    "expected_tier": "Tier 3",
+    "expected_credit_percent": 50.0,
+    "expected_credit_amount": 11250.00,
+    "expected_net_payable": 11250.00,
+    "expected_answer_keywords": ["Tier 3", "50%", "11,250.00", "22,500.00"]
+  },
+  {
+    "id": "stress_P1_boundary",
+    "category": "Category F — Range Boundary Semantics (A <= x < B)",
+    "prompt_id": "P",
+    "query": "What SLA tier applies to an uptime of exactly 99.0% versus 98.99%?",
+    "expected_capabilities": ["calculation"],
+    "expected_answer_keywords": ["Tier 2", "Tier 3"]
+  }
+]
+

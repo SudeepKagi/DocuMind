@@ -1,10 +1,10 @@
 import React, { useState, useMemo } from "react";
 import { marked } from "marked";
 
-// Configure marked with GitHub Flavored Markdown and line breaks
+// Configure marked with GitHub Flavored Markdown
 marked.setOptions({
   gfm: true,
-  breaks: true,
+  breaks: false,
 });
 
 export default function FinalAnswerCard({ finalAnswer, toolsUsedCount, sources = [] }) {

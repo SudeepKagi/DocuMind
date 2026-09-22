@@ -19,6 +19,9 @@ try:
         extract_metadata,
         search_documents,
         answer_question,
+        qwen_model,
+        qwen_tokenizer,
+        embedding_model,
     )
     logger.info("Successfully imported DocuMind ML agent from %s", ML_SRC)
 except ImportError as e:
@@ -31,6 +34,18 @@ class DocuMindService:
     Application service wrapper around the existing DocuMind ML/Agent system.
     Strictly preserves existing ML/Agent logic and response contracts.
     """
+
+    @property
+    def qwen_model(self):
+        return qwen_model
+
+    @property
+    def qwen_tokenizer(self):
+        return qwen_tokenizer
+
+    @property
+    def embedding_model(self):
+        return embedding_model
 
     @staticmethod
     def run_agent(question: str) -> Dict[str, Any]:

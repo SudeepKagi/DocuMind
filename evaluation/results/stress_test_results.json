@@ -1,0 +1,397 @@
+{
+  "total_stress_tests": 20,
+  "passed_stress_tests": 20,
+  "overall_pass_rate": 1.0,
+  "dag_capability_accuracy": 1.0,
+  "calculation_exact_match_rate": 1.0,
+  "negative_restraint_compliance_rate": 1.0,
+  "mean_keyword_grounding_recall": 0.95,
+  "mean_latency_ms": 3850.52,
+  "items": [
+    {
+      "id": "stress_A1",
+      "prompt_id": "A",
+      "category": "Category A \u2014 Tool Chaining & Compound Execution",
+      "query": "Extract the line items, calculate the effective tax rate per item, and tell me if the subtotal reflects a pre-tax or post-discount value.",
+      "clean_query": "Extract the line items, calculate the effective tax rate per item, and tell me if the subtotal reflects a pre-tax or post-discount value.",
+      "dag_capabilities": [
+        "retrieval",
+        "extraction",
+        "calculation"
+      ],
+      "dag_match": true,
+      "calculation_match": true,
+      "negative_restraint_pass": true,
+      "keyword_recall": 1.0,
+      "latency_ms": 3.68,
+      "status": "PASS",
+      "final_answer_snippet": "## 1. Extracted Line Items (5 Total)\n\n| # | Item Specification & Deliverables | Qty | Unit Rate ($) | Total Amount ($) | Allocated Tax ($) | Effective Tax Rate |\n|---|---|---|---|---|---|---|\n| 01 | *"
+    },
+    {
+      "id": "stress_A2_paraphrase",
+      "prompt_id": "A",
+      "category": "Category A \u2014 Paraphrased Compound Execution",
+      "query": "Can you parse every itemized deliverable from the table, compute what percentage of tax applies effectively to each, and verify whether the subtotal is calculated before taxes and discounts?",
+      "clean_query": "parse every itemized deliverable from the table, compute what percentage of tax applies effectively to each, and verify whether the subtotal is calculated before taxes and discounts?",
+      "dag_capabilities": [
+        "retrieval",
+        "extraction",
+        "calculation"
+      ],
+      "dag_match": true,
+      "calculation_match": true,
+      "negative_restraint_pass": true,
+      "keyword_recall": 0.75,
+      "latency_ms": 0.53,
+      "status": "PASS",
+      "final_answer_snippet": "## 1. Extracted Line Items (5 Total)\n\n| # | Item Specification & Deliverables | Qty | Unit Rate ($) | Total Amount ($) | Allocated Tax ($) | Effective Tax Rate |\n|---|---|---|---|---|---|---|\n| 01 | *"
+    },
+    {
+      "id": "stress_B1",
+      "prompt_id": "B",
+      "category": "Category A \u2014 Conversational Masking",
+      "query": "Hey, I think there's a discrepancy in what we owe this vendor compared to our standard terms\u2014what's the IBAN and penalty rate?",
+      "clean_query": "I think there's a discrepancy in what we owe this vendor compared to our standard terms\u2014what's the IBAN and penalty rate?",
+      "dag_capabilities": [
+        "retrieval",
+        "extraction",
+        "reasoning"
+      ],
+      "dag_match": true,
+      "calculation_match": true,
+      "negative_restraint_pass": true,
+      "keyword_recall": 0.75,
+      "latency_ms": 8805.66,
+      "status": "PASS",
+      "final_answer_snippet": "## Structured Field Extractions\n- **IBAN:** `Not Provided` *(Document specifies SWIFT/BIC and ABA Routing Code for domestic electronic remittance, but contains no IBAN code.)*\n- **Iban Explanation:** "
+    },
+    {
+      "id": "stress_B2_paraphrase",
+      "prompt_id": "B",
+      "category": "Category A \u2014 Conversational Masking Paraphrase",
+      "query": "Please check if our payment to the contractor has an issue with terms, specifically what is their IBAN and the late payment penalty fee?",
+      "clean_query": "check if our payment to the contractor has an issue with terms, specifically what is their IBAN and the late payment penalty fee?",
+      "dag_capabilities": [
+        "retrieval",
+        "extraction",
+        "reasoning"
+      ],
+      "dag_match": true,
+      "calculation_match": true,
+      "negative_restraint_pass": true,
+      "keyword_recall": 1.0,
+      "latency_ms": 4792.55,
+      "status": "PASS",
+      "final_answer_snippet": "## Structured Field Extractions\n- **IBAN:** `Not Provided` *(Document specifies SWIFT/BIC and ABA Routing Code for domestic electronic remittance, but contains no IBAN code.)*\n- **Iban Explanation:** "
+    },
+    {
+      "id": "stress_C1",
+      "prompt_id": "C",
+      "category": "Category A \u2014 Multi-Intent Classification & Extraction",
+      "query": "Is this an invoice, a credit memo, or a purchase order, and which counterparty is issuing the charges?",
+      "clean_query": "Is this an invoice, a credit memo, or a purchase order, and which counterparty is issuing the charges?",
+      "dag_capabilities": [
+        "classification",
+        "retrieval",
+        "extraction",
+        "calculation",
+        "reasoning"
+      ],
+      "dag_match": true,
+      "calculation_match": true,
+      "negative_restraint_pass": true,
+      "keyword_recall": 1.0,
+      "latency_ms": 1.98,
+      "status": "PASS",
+      "final_answer_snippet": "## 1. Extracted Line Items (5 Total)\n\n| # | Item Specification & Deliverables | Qty | Unit Rate ($) | Total Amount ($) | Allocated Tax ($) | Effective Tax Rate |\n|---|---|---|---|---|---|---|\n| 01 | *"
+    },
+    {
+      "id": "stress_C2_paraphrase",
+      "prompt_id": "C",
+      "category": "Category A \u2014 Multi-Intent Paraphrase",
+      "query": "What type of billing record is this (e.g. invoice or PO) and who is the vendor billing us?",
+      "clean_query": "What type of billing record is this (e.g. invoice or PO) and who is the vendor billing us?",
+      "dag_capabilities": [
+        "classification",
+        "retrieval",
+        "extraction",
+        "reasoning"
+      ],
+      "dag_match": true,
+      "calculation_match": true,
+      "negative_restraint_pass": true,
+      "keyword_recall": 1.0,
+      "latency_ms": 976.44,
+      "status": "PASS",
+      "final_answer_snippet": "## Structured Field Extractions\n- **Document Classification:** Unknown\n- **Remittance / Operational Office Address:** NEXUS GLOBAL DYNAMICS LLC, Global Billing Operations, Tower Two, 500 Financial Way"
+    },
+    {
+      "id": "stress_D1",
+      "prompt_id": "D",
+      "category": "Category B \u2014 Relative Tabular Item Targeting",
+      "query": "What is the exact unit price and extended subtotal for the third line item listed in the deliverables table?",
+      "clean_query": "What is the exact unit price and extended subtotal for the third line item listed in the deliverables table?",
+      "dag_capabilities": [
+        "retrieval",
+        "extraction",
+        "reasoning"
+      ],
+      "dag_match": true,
+      "calculation_match": true,
+      "negative_restraint_pass": true,
+      "keyword_recall": 1.0,
+      "latency_ms": 0.74,
+      "status": "PASS",
+      "final_answer_snippet": "## 1. Extracted Line Items (5 Total)\n\n| # | Item Specification & Deliverables | Qty | Unit Rate ($) | Total Amount ($) | Allocated Tax ($) | Effective Tax Rate |\n|---|---|---|---|---|---|---|\n| 01 | *"
+    },
+    {
+      "id": "stress_D2_paraphrase",
+      "prompt_id": "D",
+      "category": "Category B \u2014 Relative Tabular Item Paraphrase",
+      "query": "Tell me the rate and total price for item #3 in the invoice table.",
+      "clean_query": "the rate and total price for item #3 in the invoice table.",
+      "dag_capabilities": [
+        "retrieval",
+        "extraction",
+        "reasoning"
+      ],
+      "dag_match": true,
+      "calculation_match": true,
+      "negative_restraint_pass": true,
+      "keyword_recall": 1.0,
+      "latency_ms": 0.5,
+      "status": "PASS",
+      "final_answer_snippet": "## 1. Extracted Line Items (5 Total)\n\n| # | Item Specification & Deliverables | Qty | Unit Rate ($) | Total Amount ($) | Allocated Tax ($) | Effective Tax Rate |\n|---|---|---|---|---|---|---|\n| 01 | *"
+    },
+    {
+      "id": "stress_E1",
+      "prompt_id": "E",
+      "category": "Category B \u2014 Spatial Address Differentiation",
+      "query": "What is the physical address where payment must be mailed versus the recipient address of the services?",
+      "clean_query": "What is the physical address where payment must be mailed versus the recipient address of the services?",
+      "dag_capabilities": [
+        "retrieval",
+        "extraction",
+        "reasoning"
+      ],
+      "dag_match": true,
+      "calculation_match": true,
+      "negative_restraint_pass": true,
+      "keyword_recall": 1.0,
+      "latency_ms": 0.53,
+      "status": "PASS",
+      "final_answer_snippet": "## Structured Field Extractions\n- **Remittance / Operational Office Address:** NEXUS GLOBAL DYNAMICS LLC, Global Billing Operations, Tower Two, 500 Financial Way, 18th Floor, New York, NY 10005, Unite"
+    },
+    {
+      "id": "stress_F1",
+      "prompt_id": "F",
+      "category": "Category B \u2014 Trade Discount Semantics",
+      "query": "Extract the trade discount amount, its deduction percentage, and verify which line item it was applied against.",
+      "clean_query": "Extract the trade discount amount, its deduction percentage, and verify which line item it was applied against.",
+      "dag_capabilities": [
+        "retrieval",
+        "extraction",
+        "calculation"
+      ],
+      "dag_match": true,
+      "calculation_match": true,
+      "negative_restraint_pass": true,
+      "keyword_recall": 1.0,
+      "latency_ms": 1.07,
+      "status": "PASS",
+      "final_answer_snippet": "## 1. Extracted Line Items (5 Total)\n\n| # | Item Specification & Deliverables | Qty | Unit Rate ($) | Total Amount ($) | Allocated Tax ($) | Effective Tax Rate |\n|---|---|---|---|---|---|---|\n| 01 | *"
+    },
+    {
+      "id": "stress_G1",
+      "prompt_id": "G",
+      "category": "Category C \u2014 Alphanumeric Exact Identifier Search",
+      "query": "Show me records mentioning transaction reference INV-2026-8842-X.",
+      "clean_query": "records mentioning transaction reference INV-2026-8842-X.",
+      "dag_capabilities": [
+        "retrieval",
+        "extraction",
+        "reasoning"
+      ],
+      "dag_match": true,
+      "calculation_match": true,
+      "negative_restraint_pass": true,
+      "keyword_recall": 1.0,
+      "latency_ms": 2370.13,
+      "status": "PASS",
+      "final_answer_snippet": "## Structured Field Extractions\n- **Transaction Reference:** INV-2026-8842-X\n- **Issuing Entity (Vendor):** Nexus Global Dynamics LLC\n- **Total Amount Due:** $20,567.50\n\n## Summary & Context\nBased on "
+    },
+    {
+      "id": "stress_H1",
+      "prompt_id": "H",
+      "category": "Category C \u2014 Legal Clause Retrieval",
+      "query": "Find the clause describing what occurs if settlement is delayed past the agreed grace period.",
+      "clean_query": "Find the clause describing what occurs if settlement is delayed past the agreed grace period.",
+      "dag_capabilities": [
+        "retrieval",
+        "extraction",
+        "calculation",
+        "reasoning"
+      ],
+      "dag_match": true,
+      "calculation_match": true,
+      "negative_restraint_pass": true,
+      "keyword_recall": 0.75,
+      "latency_ms": 6677.38,
+      "status": "PASS",
+      "final_answer_snippet": "## Structured Field Extractions\n- **Grace Period Clause:** Payment Terms & Conditions:\nPayment is due within thirty (30) calendar days of invoice date (Net 30). Undisputed amounts past due accrue late"
+    },
+    {
+      "id": "stress_I1",
+      "prompt_id": "I",
+      "category": "Category C \u2014 Anti-Premise Echoing & Cross-Field Binding",
+      "query": "Which purchase order authorized the wire transfer routing code 021000021?",
+      "clean_query": "Which purchase order authorized the wire transfer routing code 021000021?",
+      "dag_capabilities": [
+        "retrieval",
+        "extraction",
+        "reasoning"
+      ],
+      "dag_match": true,
+      "calculation_match": true,
+      "negative_restraint_pass": true,
+      "keyword_recall": 0.75,
+      "latency_ms": 8764.36,
+      "status": "PASS",
+      "final_answer_snippet": "## Structured Field Extractions\n- **IBAN:** `Not Provided` *(Document specifies SWIFT/BIC and ABA Routing Code for domestic electronic remittance, but contains no IBAN code.)*\n- **Iban Explanation:** "
+    },
+    {
+      "id": "stress_J1",
+      "prompt_id": "J",
+      "category": "Category D \u2014 Deterministic Reconciliation",
+      "query": "Sum all individual item totals, subtract the discount, add the line-item tax, and tell me if the computed sum matches the grand total printed at the bottom.",
+      "clean_query": "Sum all individual item totals, subtract the discount, add the line-item tax, and tell me if the computed sum matches the grand total printed at the bottom.",
+      "dag_capabilities": [
+        "retrieval",
+        "extraction",
+        "calculation"
+      ],
+      "dag_match": true,
+      "calculation_match": true,
+      "negative_restraint_pass": true,
+      "keyword_recall": 1.0,
+      "latency_ms": 1.14,
+      "status": "PASS",
+      "final_answer_snippet": "## 1. Extracted Line Items (5 Total)\n\n| # | Item Specification & Deliverables | Qty | Unit Rate ($) | Total Amount ($) | Allocated Tax ($) | Effective Tax Rate |\n|---|---|---|---|---|---|---|\n| 01 | *"
+    },
+    {
+      "id": "stress_K1",
+      "prompt_id": "K",
+      "category": "Category D \u2014 Strict Negative Restraint (Hallucination Control)",
+      "query": "Which bank branch address is specified for international SWIFT transactions? Answer ONLY using information explicitly stated in the text; state 'Not Provided' if missing.",
+      "clean_query": "Which bank branch address is specified for international SWIFT transactions? Answer ONLY using information explicitly stated in the text; state 'Not Provided' if missing.",
+      "dag_capabilities": [
+        "retrieval",
+        "extraction",
+        "reasoning"
+      ],
+      "dag_match": true,
+      "calculation_match": true,
+      "negative_restraint_pass": true,
+      "keyword_recall": 1.0,
+      "latency_ms": 451.07,
+      "status": "PASS",
+      "final_answer_snippet": "## Structured Field Extractions\n- **Bank Branch Address:** `Not Provided`\n\n## Summary & Context\nNot Provided"
+    },
+    {
+      "id": "stress_L1",
+      "prompt_id": "L",
+      "category": "Category D \u2014 Temporal Reasoning & Net Terms",
+      "query": "If this invoice was issued on the date listed, and standard Net-30 terms apply, what is the exact calendar date payment becomes overdue, taking into account any explicit dispute notification period?",
+      "clean_query": "If this invoice was issued on the date listed, and standard Net-30 terms apply, what is the exact calendar date payment becomes overdue, taking into account any explicit dispute notification period?",
+      "dag_capabilities": [
+        "retrieval",
+        "calculation",
+        "reasoning"
+      ],
+      "dag_match": true,
+      "calculation_match": true,
+      "negative_restraint_pass": true,
+      "keyword_recall": 1.0,
+      "latency_ms": 9132.77,
+      "status": "PASS",
+      "final_answer_snippet": "## Payment Terms & Calendar Dates\n- **Issue Date:** `21 Sep 2026`\n- **Payment Terms:** Net 30 calendar days\n- **Payment Due Date:** **`21 Oct 2026`**\n- **Payment Overdue Date:** **`21 Oct 2026`** (imm"
+    },
+    {
+      "id": "stress_M1_novel",
+      "prompt_id": "M",
+      "category": "Category E \u2014 Novel Unseen Query: Charges & Tax Percentage",
+      "query": "List the charges included in this invoice and compute their effective tax percentages.",
+      "clean_query": "List the charges included in this invoice and compute their effective tax percentages.",
+      "dag_capabilities": [
+        "retrieval",
+        "extraction",
+        "calculation"
+      ],
+      "dag_match": true,
+      "calculation_match": true,
+      "negative_restraint_pass": true,
+      "keyword_recall": 1.0,
+      "latency_ms": 0.44,
+      "status": "PASS",
+      "final_answer_snippet": "## 1. Extracted Line Items (5 Total)\n\n| # | Item Specification & Deliverables | Qty | Unit Rate ($) | Total Amount ($) | Allocated Tax ($) | Effective Tax Rate |\n|---|---|---|---|---|---|---|\n| 01 | *"
+    },
+    {
+      "id": "stress_N1_novel",
+      "prompt_id": "N",
+      "category": "Category E \u2014 Novel Unseen Query: Bank Instructions & Late Penalty",
+      "query": "Give me the bank information and contractual late-payment penalty.",
+      "clean_query": "Give me the bank information and contractual late-payment penalty.",
+      "dag_capabilities": [
+        "retrieval",
+        "extraction",
+        "reasoning"
+      ],
+      "dag_match": true,
+      "calculation_match": true,
+      "negative_restraint_pass": true,
+      "keyword_recall": 1.0,
+      "latency_ms": 5489.25,
+      "status": "PASS",
+      "final_answer_snippet": "## Structured Field Extractions\n- **IBAN:** `Not Provided` *(Document specifies SWIFT/BIC and ABA Routing Code for domestic electronic remittance, but contains no IBAN code.)*\n- **Iban Explanation:** "
+    },
+    {
+      "id": "stress_O1_sla",
+      "prompt_id": "O",
+      "category": "Category F \u2014 SLA Tier Interval & Credit Calculation",
+      "query": "Our uptime was 98.4% this month. Look up the SLA tier, calculate the service credit percentage, and determine the net payable on our $22,500 commitment fee.",
+      "clean_query": "Our uptime was 98.4% this month. Look up the SLA tier, calculate the service credit percentage, and determine the net payable on our $22,500 commitment fee.",
+      "dag_capabilities": [
+        "retrieval",
+        "extraction",
+        "calculation",
+        "reasoning"
+      ],
+      "dag_match": true,
+      "calculation_match": true,
+      "negative_restraint_pass": true,
+      "keyword_recall": 1.0,
+      "latency_ms": 16087.0,
+      "status": "PASS",
+      "final_answer_snippet": "## Structured Field Extractions\n- **Base Commitment Fee:** `Not Provided`\n\n## 2. Deterministic Calculation & Tax Analysis\n- **Formula:** `Base: $22,500.00 | SLA Credit (50%): -$11,250.00 | Net Payable"
+    },
+    {
+      "id": "stress_P1_boundary",
+      "prompt_id": "P",
+      "category": "Category F \u2014 Range Boundary Semantics (A <= x < B)",
+      "query": "What SLA tier applies to an uptime of exactly 99.0% versus 98.99%?",
+      "clean_query": "What SLA tier applies to an uptime of exactly 99.0% versus 98.99%?",
+      "dag_capabilities": [
+        "retrieval",
+        "calculation",
+        "reasoning"
+      ],
+      "dag_match": true,
+      "calculation_match": true,
+      "negative_restraint_pass": true,
+      "keyword_recall": 1.0,
+      "latency_ms": 13453.14,
+      "status": "PASS",
+      "final_answer_snippet": "## 2. Deterministic Calculation & Tax Analysis\n- **Formula:** `Base: $22,500.00 | SLA Credit (10%): -$2,250.00 | Net Payable: $20,250.00`\n- Uptime 99.0% falls in Tier 2: Minor degradation (10% service"
+    }
+  ]
+}

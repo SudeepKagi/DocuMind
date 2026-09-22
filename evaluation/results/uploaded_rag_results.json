@@ -13,9 +13,9 @@
   "metrics": {
     "retrieval_recall_at_5": 1.0,
     "source_correctness_accuracy": 1.0,
-    "mean_token_f1": 0.3001,
-    "mean_keyword_grounding_recall": 0.875,
-    "mean_total_latency_ms": 16480.2
+    "mean_token_f1": 0.296,
+    "mean_keyword_grounding_recall": 0.825,
+    "mean_total_latency_ms": 10804.15
   },
   "query_results": [
     {
@@ -32,9 +32,9 @@
       "source_correct": true,
       "token_f1": 0.1525,
       "keyword_recall": 0.8,
-      "retrieval_latency_ms": 356.1,
-      "generation_latency_ms": 23080.3,
-      "total_latency_ms": 23436.4
+      "retrieval_latency_ms": 3315.22,
+      "generation_latency_ms": 24673.08,
+      "total_latency_ms": 27988.3
     },
     {
       "id": "up_02",
@@ -44,15 +44,15 @@
       "target_doc_ids": [
         "doc_21dec666"
       ],
-      "generated_answer": "The CloudNet Security Assessment document lists several security certifications and compliance frameworks:\n\n1. **ISO 27001:2022** - This is listed as a current certification held by CloudNet, which is valid until December 2027. It ensures the organization has implemented appropriate controls to protect assets and confidentiality.\n\n2. **SOC 2 Type II Audit** - An independent audit conducted in January 2026 found no material deficiencies. The SOC 2 Type II audit provides assurance regarding the design and operation of CloudNet's internal control environment, including its security, technology, and ethics controls.\n\nThese certifications and audits demonstrate CloudNet's commitment to maintaining robust security measures and adhering to industry standards and regulatory requirements",
+      "generated_answer": "The CloudNet Security Assessment documents the following:\n\n- **ISO 27001:2022** - Holds an ISO 27001:2022 certification valid through December 2027.\n- **SOC 2 Type II Audit** - An independent SOC 2 Type II audit was completed in January 2026 with no material deficiencies reported. This indicates that CloudNet adheres to specific service level agreements and has demonstrated its ability to provide reliable and secure cloud services.",
       "expected_answer": "Documents enterprise security assessment, compliance frameworks, encryption standards, and certification controls.",
       "retrieval_hit": true,
       "source_correct": true,
-      "token_f1": 0.1441,
-      "keyword_recall": 1.0,
-      "retrieval_latency_ms": 54.51,
-      "generation_latency_ms": 23902.99,
-      "total_latency_ms": 23957.5
+      "token_f1": 0.1449,
+      "keyword_recall": 0.6,
+      "retrieval_latency_ms": 60.24,
+      "generation_latency_ms": 12284.89,
+      "total_latency_ms": 12345.13
     },
     {
       "id": "up_03",
@@ -62,15 +62,15 @@
       "target_doc_ids": [
         "doc_4ca5a3b1"
       ],
-      "generated_answer": "The total amount due for server hardware PO-9981 is $900.00 USD. The vendor is Enterprise Compute Solutions LLC. Payment terms are Net 30 with delivery expected by October 5, 2026. \n\nNote: Invoice number INV-88219 is mentioned but not included in the answer. It seems there might be a typo or missing information in the original message. However, based on the available evidence, these details can be extracted. If more context is needed, please provide additional information.",
+      "generated_answer": "The total amount due for server hardware PO-9981 is $900.00 USD. The vendor is Enterprise Compute Solutions LLC. Payment terms are Net 30. Delivery is expected by October 5, 2026. The invoice number is INV-88219. The subject line indicates urgency regarding approval. The invoice includes details such as item specifications, deliverables, and pricing for cloud infrastructure migration services, enterprise security audits, high-throughput API gateways, and 24/7 SLA engineering support retainer. It also mentions tax information including state and local sales tax. The post-mortem report discusses a production vector search degradation incident affecting 14% of queries, which",
       "expected_answer": "Total amount due is $14,900.00 USD, vendor is Enterprise Compute Solutions LLC, payment terms are Net 30 for 4x Dell PowerEdge R760 servers.",
       "retrieval_hit": true,
       "source_correct": true,
-      "token_f1": 0.3656,
+      "token_f1": 0.3036,
       "keyword_recall": 0.6,
-      "retrieval_latency_ms": 60.27,
-      "generation_latency_ms": 17367.4,
-      "total_latency_ms": 17427.67
+      "retrieval_latency_ms": 51.98,
+      "generation_latency_ms": 21810.81,
+      "total_latency_ms": 21862.79
     },
     {
       "id": "up_04",
@@ -80,15 +80,15 @@
       "target_doc_ids": [
         "doc_771891a2"
       ],
-      "generated_answer": "The root cause of the incident was disk I/O saturation on the HNSW index cache after an automated cluster snapshot creation. The resolution involved replacing the snapshot cron schedule to run during off-peak hours (02:00 UTC) and provisioning a 5000 IOPS NVMe SSD volume. Additionally, action items included completing memory pinning for high-frequency vector collections and enabling automated alerting at an 80% IOPS threshold.",
+      "generated_answer": "The root cause of the incident was disk I/O saturation on the HNSW index cache after an automated cluster snapshot creation. The resolution involved replacing the snapshot cron schedule to off-peak hours (02:00 UTC) and provisioning a 5000 IOPS NVMe SSD volume. Additionally, action items included completing memory pinning for high-frequency vector collections and enabling automated alerting at an 80% IOPS threshold.",
       "expected_answer": "Root cause was disk I/O saturation on HNSW index cache during snapshots. Resolved by rescheduling to 02:00 UTC and provisioning 5000 IOPS NVMe SSD volume.",
       "retrieval_hit": true,
       "source_correct": true,
-      "token_f1": 0.5185,
+      "token_f1": 0.5063,
       "keyword_recall": 1.0,
-      "retrieval_latency_ms": 46.81,
-      "generation_latency_ms": 13787.09,
-      "total_latency_ms": 13833.91
+      "retrieval_latency_ms": 35.98,
+      "generation_latency_ms": 7911.03,
+      "total_latency_ms": 7947.01
     },
     {
       "id": "up_05",
@@ -104,9 +104,9 @@
       "source_correct": true,
       "token_f1": 0.3077,
       "keyword_recall": 1.0,
-      "retrieval_latency_ms": 49.7,
-      "generation_latency_ms": 8095.72,
-      "total_latency_ms": 8145.42
+      "retrieval_latency_ms": 14.55,
+      "generation_latency_ms": 2428.1,
+      "total_latency_ms": 2442.65
     },
     {
       "id": "up_06",
@@ -114,8 +114,8 @@
       "file_type": "PDF",
       "query_scope": "multi_document_comparison",
       "target_doc_ids": [
-        "doc_94520dc7",
-        "doc_eb076b64"
+        "doc_eb076b64",
+        "doc_94520dc7"
       ],
       "generated_answer": "Alex Mehta has extensive experience in software engineering, particularly in building full-stack web applications and AI-assisted developer tools. His skills include proficiency in languages like Java, C, Python, SQL; knowledge of web technologies such as React, JavaScript, HTML, CSS, Node.js, Express; databases including MongoDB, PostgreSQL; and AI/ML tools like transformers, Hugging Face, RAG, embeddings, semantic search, prompt engineering. He also possesses technical skills in Git, GitHub, Docker, Postman, VS Code, and has developed projects like DocuMind, PushDoc, and Stayora.\n\nThe Northstar AI software engineering internship JD lists preferred skills such as React or another modern frontend framework, Docker and containerized development, vector databases or",
       "expected_answer": "Alex demonstrates software engineering and ML coursework aligned with Northstar AI platform engineering requirements.",
@@ -123,9 +123,9 @@
       "source_correct": true,
       "token_f1": 0.1197,
       "keyword_recall": 1.0,
-      "retrieval_latency_ms": 59.25,
-      "generation_latency_ms": 21492.99,
-      "total_latency_ms": 21552.24
+      "retrieval_latency_ms": 15.06,
+      "generation_latency_ms": 6277.16,
+      "total_latency_ms": 6292.23
     },
     {
       "id": "up_07",
@@ -133,8 +133,8 @@
       "file_type": "PDF",
       "query_scope": "multi_document_comparison",
       "target_doc_ids": [
-        "doc_bd713dba",
-        "doc_25b5c168"
+        "doc_25b5c168",
+        "doc_bd713dba"
       ],
       "generated_answer": "Sudeep Kagi has a Bachelor's degree in Electronics and Communication Engineering (Circuit Branch) and is currently pursuing his final year studies. He possesses extensive hands-on experience in full-stack development, particularly with JavaScript, React.js, Node.js, Express.js, PostgreSQL, and MongoDB. His professional summary highlights his ability to architect, build, and debug high-performance, secure, and scalable production systems, including a 4-role distributed exam-proctoring platform and an automation-driven GitHub documentation app. Additionally, he has led a national-level hackathon team to a Runner-Up finish, demonstrating leadership and commitment to delivering results under pressure. \n\nThe OpenText developer role requires expertise in artificial intelligence, machine learning, data science, and generative AI.",
       "expected_answer": "Candidate demonstrates enterprise systems engineering and document processing matching OpenText AI/ML developer competencies.",
@@ -142,9 +142,9 @@
       "source_correct": true,
       "token_f1": 0.0901,
       "keyword_recall": 0.6,
-      "retrieval_latency_ms": 41.6,
-      "generation_latency_ms": 19336.73,
-      "total_latency_ms": 19378.33
+      "retrieval_latency_ms": 17.51,
+      "generation_latency_ms": 6186.62,
+      "total_latency_ms": 6204.13
     },
     {
       "id": "up_08",
@@ -152,18 +152,18 @@
       "file_type": "EML + DOCX",
       "query_scope": "multi_document",
       "target_doc_ids": [
-        "doc_4ca5a3b1",
-        "doc_21dec666"
+        "doc_21dec666",
+        "doc_4ca5a3b1"
       ],
-      "generated_answer": "The server hardware in the approval email was provided by Enterprise Compute Solutions LLC. The vendor that was audited in the security assessment was CloudNet.",
+      "generated_answer": "The server hardware in the approval email was provided by Enterprise Compute Solutions LLC. The vendor audited in the security assessment was CloudNet.",
       "expected_answer": "Enterprise Compute Solutions LLC provided the servers in the email, while CloudNet was the vendor evaluated in the security assessment.",
       "retrieval_hit": true,
       "source_correct": true,
-      "token_f1": 0.7027,
+      "token_f1": 0.7429,
       "keyword_recall": 1.0,
-      "retrieval_latency_ms": 65.83,
-      "generation_latency_ms": 4044.32,
-      "total_latency_ms": 4110.15
+      "retrieval_latency_ms": 13.36,
+      "generation_latency_ms": 1337.6,
+      "total_latency_ms": 1350.96
     }
   ]
 }

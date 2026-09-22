@@ -12,7 +12,7 @@ from schemas.requests import (
     QARequest,
     DocumentRequest,
 )
-from services.agent_orchestrator import agent_orchestrator
+from services.agent import agent_orchestrator
 from services.documind_service import documind_service
 
 logger = logging.getLogger("documind.routes.agent")

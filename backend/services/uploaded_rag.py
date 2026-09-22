@@ -418,7 +418,7 @@ class UploadedDocumentRAGService:
             return {
                 "status": "success",
                 "question": question,
-                "answer": "No relevant information found in your uploaded documents.",
+                "answer": "Not Mentioned in Provided Context",
                 "documents": [],
                 "sources": [],
             }
@@ -461,164 +461,47 @@ class UploadedDocumentRAGService:
 
         evidence_text = "\n".join(evidence_lines)
 
-        # 5. Construct specialized grounded prompt based on question intent
-        if q_type == "COMPARISON":
-            is_resume_jd = any(
-                k in question.lower() for k in ["resume", "cv", "candidate", "applicant", "internship", "jd", "job"]
-            ) or any(
-                "resume" in doc.lower() or "jd" in doc.lower() or "internship" in doc.lower()
-                for doc in unique_docs
+        # 4b. Generalized Dynamic Task Execution Pipeline (5 Core Primitives)
+        from .agent import agent, Evidence
+
+        ev_objs = [
+            Evidence(
+                document_id=h["metadata"].get("document_id", ""),
+                filename=h["metadata"].get("filename", "Uploaded Document"),
+                page=h["metadata"].get("page", 1),
+                chunk_id=str(h["metadata"].get("chunk_id", i)),
+                source_text=h["text"],
+                score=h["score"],
             )
+            for i, h in enumerate(deduped_hits)
+        ]
 
-            if is_resume_jd:
-                prompt = f"""You are DocuMind, an enterprise document intelligence assistant.
-
-Compare the supplied documents using ONLY the evidence provided.
-
-Do not invent information.
-
-Clearly separate information from each document.
-
-For a resume vs job-description comparison, produce:
-
-## Overall comparison
-Brief summary.
-
-## Skills already demonstrated
-List skills explicitly supported by the resume that match requirements in the JD.
-
-## Required skills not demonstrated
-List JD requirements that are not clearly supported by the resume.
-Important: Do not claim a skill is missing merely because it was not found in a retrieved chunk. Say "not demonstrated in the resume evidence" when appropriate.
-
-## Relevant projects and experience
-Identify projects/experience from the resume that are relevant to the JD.
-
-## Skill gaps
-Explain the main differences between the candidate evidence and the role requirements.
-
-## Evidence
-Cite the relevant source filename and page number after important claims.
-
-Use markdown.
-Do not invent facts.
-
-Question:
-{question}
-
-Evidence:
-{evidence_text}
-
-Answer:
-"""
-            else:
-                prompt = f"""You are DocuMind, an enterprise document intelligence assistant.
-
-Compare the supplied documents using ONLY the evidence provided.
-
-Do not invent information.
-
-Clearly separate information from each document.
-
-Produce:
-
-## Overall comparison
-Summary of similarities and differences.
-
-## Key provisions & findings
-Detailed breakdown of each document based on the evidence.
-
-## Critical differences
-Specific variances and differences between the documents.
-
-## Evidence
-Cite the relevant source filename and page number after important claims.
-
-Use markdown.
-Do not invent facts.
-
-Question:
-{question}
-
-Evidence:
-{evidence_text}
-
-Answer:
-"""
-        else:
-            # Tailor prompt instructions to query type without universal 2-4 sentence restrictions
-            type_guidelines = {
-                "FACTUAL": "- Provide a direct, accurate answer in 1-3 sentences based strictly on the facts in the evidence.",
-                "SUMMARY": "- Provide a comprehensive, well-structured summary using markdown headings and bullet points (covering Education, Technical Skills, Key Projects, and Professional Experience where supported by the evidence).",
-                "EXPLANATION": "- Provide a detailed, clear explanation (3-6 sentences or structured paragraphs) explaining the mechanisms, concepts, or context in the evidence.",
-                "ENUMERATION": "- Provide a complete, exhaustive list of all matching items, skills, requirements, or projects found in the evidence using markdown bullet points.",
-                "CALCULATION": "- Explain the formula, input figures, step-by-step calculation, and resulting amount clearly.",
-            }
-            guideline = type_guidelines.get(q_type, "- Give enough detail to fully answer the question.")
-
-            prompt = f"""You are DocuMind, an enterprise document intelligence assistant.
-
-Answer using ONLY the supplied evidence.
-
-Rules:
-- Do not invent facts.
-- Do not copy raw OCR.
-- Ignore repeated OCR values.
-- Distinguish evidence from inference.
-- If the evidence does not support a claim, explicitly say so.
-- Give enough detail to fully answer the question.
-{guideline}
-- Use markdown when it improves readability (bullet points, bold text, headings).
-- Cite filename and page number where available.
-
-Question:
-{question}
-
-Evidence:
-{evidence_text}
-
-Answer:
-"""
-
-        # 6. Adapt generation token budget to question type
-        token_budgets = {
-            "COMPARISON": 480,
-            "SUMMARY": 400,
-            "ENUMERATION": 340,
-            "EXPLANATION": 280,
-            "CALCULATION": 260,
-            "FACTUAL": 160,
-        }
-        max_tokens = token_budgets.get(q_type, 280)
-
-        inputs = qwen_tokenizer(
-            prompt,
-            return_tensors="pt",
-            truncation=True,
-            max_length=4096,
+        executed_state = agent.run(
+            query=question,
+            user_id=user_id,
+            query_embedding=query_embedding,
+            document_id=document_id,
+            target_doc_ids=target_doc_ids,
+            initial_evidence=ev_objs,
         )
-        inputs = {k: v.to(qwen_model.device) for k, v in inputs.items()}
 
-        with torch.no_grad():
-            output = qwen_model.generate(
-                **inputs,
-                max_new_tokens=max_tokens,
-                do_sample=False,
-                pad_token_id=qwen_tokenizer.eos_token_id,
-                repetition_penalty=1.1,
-            )
+        if executed_state.final_answer:
+            logger.info("Generalized task execution successfully completed with answer length %d", len(executed_state.final_answer))
+            return {
+                "status": "success",
+                "question": question,
+                "answer": executed_state.final_answer,
+                "documents": list(unique_docs),
+                "sources": sources,
+            }
 
-        generated_tokens = output[0, inputs["input_ids"].shape[1]:]
-        answer = qwen_tokenizer.decode(generated_tokens, skip_special_tokens=True).strip()
-
-        # Clean trailing incomplete sentences or orphaned headings/bullet points if truncated mid-phrase
-        if answer:
-            answer = re.sub(r"\n\s*[-*#]+\s*$", "", answer).strip()
-            if not answer.endswith((".", "!", "?", "```", "\"", "'", ")")):
-                last_punct = max(answer.rfind("."), answer.rfind("!"), answer.rfind("?"))
-                if last_punct != -1 and len(answer) - last_punct < 200:
-                    answer = answer[:last_punct + 1].strip()
-
+        # 5. Delegate narrative synthesis to unified GroundedReasoningEngine
+        from .rag import reasoning_engine
+        answer = reasoning_engine.reason(
+            question=question,
+            context_text=evidence_text,
+            mode=q_type,
+        )
 
         return {
             "status": "success",

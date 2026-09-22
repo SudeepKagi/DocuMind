@@ -592,10 +592,9 @@ kbd {
 }
 
 .answer-text {
-  font-size: 17px;
-  line-height: 1.75;
+  font-size: 15px;
+  line-height: 1.7;
   color: #f1f5f9;
-  white-space: pre-line;
   font-weight: 400;
 }
 
@@ -2428,36 +2427,46 @@ kbd {
 
 .answer-text.markdown-body {
   font-size: 15px;
-  line-height: 1.7;
-  color: var(--text-main);
+  line-height: 1.65;
+  color: #f1f5f9;
   word-break: break-word;
 }
 
+.answer-text.markdown-body h1,
 .answer-text.markdown-body h2 {
-  font-size: 17px;
-  font-weight: 800;
-  color: #0f172a;
-  margin: 22px 0 10px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #38bdf8;
+  margin: 20px 0 10px 0;
   padding-bottom: 6px;
-  border-bottom: 2px solid rgba(59, 130, 246, 0.2);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.25);
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
+.answer-text.markdown-body h1:first-child,
 .answer-text.markdown-body h2:first-child {
   margin-top: 0;
 }
 
 .answer-text.markdown-body h3 {
-  font-size: 15px;
+  font-size: 14.5px;
   font-weight: 700;
-  color: #1e293b;
+  color: #93c5fd;
   margin: 16px 0 8px 0;
 }
 
+.answer-text.markdown-body h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin: 12px 0 6px 0;
+}
+
 .answer-text.markdown-body p {
-  margin: 0 0 12px 0;
+  margin: 0 0 10px 0;
+  color: #f1f5f9;
 }
 
 .answer-text.markdown-body p:last-child {
@@ -2466,68 +2475,91 @@ kbd {
 
 .answer-text.markdown-body ul,
 .answer-text.markdown-body ol {
-  margin: 8px 0 16px 0;
-  padding-left: 22px;
+  margin: 6px 0 12px 0;
+  padding-left: 20px;
 }
 
 .answer-text.markdown-body li {
-  margin-bottom: 6px;
-  line-height: 1.65;
+  margin-bottom: 4px;
+  line-height: 1.6;
+  color: #e2e8f0;
 }
 
-.answer-text.markdown-body li strong {
-  color: #0f172a;
-}
-
+.answer-text.markdown-body li strong,
 .answer-text.markdown-body strong {
   font-weight: 700;
-  color: #0f172a;
+  color: #ffffff;
 }
 
 .answer-text.markdown-body blockquote {
   margin: 12px 0;
   padding: 10px 16px;
-  background: rgba(59, 130, 246, 0.05);
-  border-left: 4px solid var(--primary);
+  background: rgba(56, 189, 248, 0.08);
+  border-left: 3px solid #38bdf8;
   border-radius: 0 8px 8px 0;
-  color: var(--text-muted);
+  color: #e2e8f0;
 }
 
 .answer-text.markdown-body code {
   font-family: var(--font-mono, monospace);
   font-size: 13px;
-  background: rgba(15, 23, 42, 0.06);
+  background: rgba(255, 255, 255, 0.1);
   padding: 2px 6px;
   border-radius: 4px;
-  color: #0f172a;
+  color: #38bdf8;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.answer-text.markdown-body pre code {
+  display: block;
+  padding: 12px 14px;
+  background: rgba(15, 23, 42, 0.7);
+  border-radius: 8px;
+  overflow-x: auto;
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .answer-text.markdown-body table {
   width: 100%;
   border-collapse: collapse;
-  margin: 16px 0;
+  margin: 14px 0;
   font-size: 13.5px;
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .answer-text.markdown-body th,
 .answer-text.markdown-body td {
-  padding: 8px 12px;
-  border: 1px solid var(--border-subtle);
+  padding: 9px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   text-align: left;
 }
 
 .answer-text.markdown-body th {
-  background: var(--bg-subtle);
+  background: rgba(255, 255, 255, 0.08);
   font-weight: 700;
-  color: var(--text-main);
+  color: #38bdf8;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+
+.answer-text.markdown-body td {
+  color: #e2e8f0;
 }
 
 .answer-text.markdown-body tr:nth-child(even) {
-  background: rgba(0, 0, 0, 0.015);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.answer-text.markdown-body tr:hover {
+  background: rgba(56, 189, 248, 0.05);
 }
 
 .answer-text.markdown-body hr {
   border: 0;
-  border-top: 1px solid var(--border-subtle);
-  margin: 20px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  margin: 16px 0;
 }

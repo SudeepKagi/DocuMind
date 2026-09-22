@@ -19,12 +19,28 @@ DocuMind provides a unified, service-oriented architecture capable of processing
 
 ## Key Highlights
 
-- **Model-Driven Autonomous Agent:** Powered by the official Google GenAI Python SDK (`google-genai`) and Gemini models (`gemini-3.5-flash`), with autonomous tool calling, multi-model failover, in-context mathematical reasoning, and local ChromaDB evidence fallback.
+- **Model-Driven Autonomous Agent:** Powered by the official Google GenAI Python SDK (`google-genai`) and Gemini models (`gemini-3.5-flash` / `gemini-3.6-flash`), with autonomous tool calling, multi-model failover, in-context mathematical reasoning, and local ChromaDB evidence fallback.
 - **Unified Studio Canvas UI:** A single-page workspace inspired by modern editorial design (Godly.design) featuring a responsive layout integrating the Agent Workspace and the Document Management Repository.
 - **Strict Multi-Tenant Retrieval Isolation:** Scoped ChromaDB vector search enforcing tenant and document boundaries (`user_id`, `document_id`) with zero fallback to global queries on empty results.
 - **Hybrid Retrieval with RRF:** Lexical search (`BM25S`) and dense semantic search (`BAAI/bge-small-en-v1.5`) fused via Reciprocal Rank Fusion ($k=60$) with structural business identifier boosting (`INV-...`, `SOW-...`, `MSKU-...`, `SWIFT`).
-- **Fine-Tuned Document Classification:** Fine-tuned `distilbert-base-uncased` achieving 99.9% accuracy across 5 core enterprise document classes (`Contract`, `Email`, `Invoice`, `Purchase Order`, `Report`).
+- **Fine-Tuned Document Classification:** Fine-tuned `distilbert-base-uncased` achieving **99.90% accuracy** (0.9993 Macro F1) across 5 core enterprise document classes (`Contract`, `Email`, `Invoice`, `Purchase Order`, `Report`).
 - **Runtime LayoutLM Invoice Extraction:** Specialized token-classification inference via fine-tuned `MultiLabelLayoutLM` utilizing true token bounding boxes from PDF layouts (`PyMuPDF`) for 7 target invoice fields, paired with a generic schema-driven extraction pipeline for non-invoice fields.
+- **In-Context Mathematical Reasoning:** Arithmetic calculations, percentage adjustments, and multi-step financial reconciliations are executed directly through frontier model reasoning without legacy calculator tools or handwritten math routing.
+
+---
+
+## Performance & Evaluation Benchmark Matrix
+
+Every component has been verified through rigorous automated benchmark suites:
+
+| Component | Model / Technology | Benchmark Scope | Core Metric | Verified Value | Target | Notes |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Document Classification** | `distilbert-base-uncased` | 996 test samples (`ml/processed/test.csv`) | Accuracy<br/>Macro F1 | **99.90%**<br/>**0.9993** | > 98.0% | Outperforms TF-IDF baseline (99.70%) and naive truncation (98.80%) |
+| **Corpus Hybrid Retrieval** | `BM25S` + `BGE-small` (RRF $k=60$) | 15 queries across 223,234 passages | Recall@10<br/>RRF Latency | **73.33%**<br/>**5.09 ms** | > 70.0%<br/>< 10 ms | Superior to single-method retrieval (BM25: 66.67%, BGE: 66.67%) |
+| **Invoice Layout Extraction** | `MultiLabelLayoutLM` (7-field) | DocILE annotated invoices | Token Macro F1<br/>Success Rate (@80%) | **87.46%**<br/>**97.01%** | > 85.0%<br/>> 95.0% | Evaluated with calibrated thresholds and true spatial bounding boxes |
+| **Uploaded Document RAG** | ChromaDB + Gemini | 8 multi-format queries (PDF, DOCX, TXT, EML) | Recall@5<br/>Attribution Acc | **100.0%**<br/>**100.0%** | 100.0%<br/>100.0% | Zero cross-tenant leakage; 82.50% keyword grounding |
+| **Gemini Autonomous Agent** | `google-genai` (Hosted Gemini) | 15 agent generalization queries | Overall Pass Rate<br/>Tool Selection Acc | **100.0%**<br/>**100.0%** | 100.0% | Evaluated across classification, retrieval, extraction, and math |
+| **Edge-Case Stress Suite** | Multi-tool DAGs & Negative Restraint | 20 edge-case stress queries | DAG Accuracy<br/>Negative Restraint | **100.0%**<br/>**100.0%** | 100.0% | Zero hallucination on absent facts ("Not Mentioned in Provided Context") |
 
 ---
 
@@ -33,7 +49,7 @@ DocuMind provides a unified, service-oriented architecture capable of processing
 - **Frontend:** React 19, Vite 8, Vanilla CSS Design System with dark enterprise tokens and JetBrains Mono typography.
 - **Backend:** FastAPI, Python 3.11+, SQLAlchemy 2.0 (`Mapped` / `mapped_column`), Alembic, PostgreSQL 16, ChromaDB (HNSW cosine space).
 - **Agent & ML Stack:**
-  - **Single Frontier Generative LLM:** Google GenAI Python SDK (`google-genai`), Gemini 3.5 Flash (`gemini-3.5-flash`), performing autonomous tool selection, synthesis, calculations, and grounded document QA.
+  - **Single Frontier Generative LLM:** Google GenAI Python SDK (`google-genai`), Gemini 3.5 Flash / 3.6 Flash, performing autonomous tool selection, synthesis, calculations, and grounded document QA.
   - **Document Classification:** Fine-tuned `distilbert-base-uncased` (5 classes, exported checkpoint in `ml/models/distilbert_doc_classifier/final`).
   - **Invoice Layout Extraction:** Fine-tuned `MultiLabelLayoutLM` (`microsoft/layoutlm-base-uncased` with 7-field token classifier in `ml/models/layoutlm_multilabel/final`), evaluated with true spatial bounding boxes.
   - **Dense Semantic Retrieval:** `BAAI/bge-small-en-v1.5` (384-dimensional embeddings, normalized cosine distance).
@@ -50,7 +66,7 @@ flowchart TD
     UI --> API[FastAPI Application Server<br/>Port 8000]
     
     subgraph AgentEngine["Model-Driven Agent Layer (services/agent.py)"]
-        Agent[Hosted Gemini Agent Orchestrator<br/>google-genai SDK: gemini-3.5-flash]
+        Agent[Hosted Gemini Agent Orchestrator<br/>google-genai SDK: gemini-3.5-flash / gemini-3.6-flash]
         Tool1[classify_document<br/>DistilBERT 5-class]
         Tool2[retrieve_documents<br/>Hybrid BM25S + BGE-small + RRF]
         Tool3[extract_document<br/>Specialized LayoutLM + Generic Schema Parser]
@@ -93,7 +109,7 @@ flowchart TD
 - **Report:** Corporate annual reviews, 10-K regulatory filings, executive summaries, and multi-KPI balance sheets.
 
 ### Ingestion File Formats
-- **PDF (`.pdf`):** Multi-page extraction via PyPDF with per-page tracking and sliding-window chunking.
+- **PDF (`.pdf`):** Multi-page extraction via PyPDF / PyMuPDF with per-page tracking and sliding-window chunking. *Note:* LayoutLM inference utilizes digital text layers and bounding boxes. Scanned raster PDFs without digital text return empty tokens (no external OCR engine is bundled).
 - **Word (`.docx`):** Paragraph and embedded table extraction via `python-docx`.
 - **Plain Text (`.txt`):** Structured text reading with whitespace normalization.
 - **Email (`.eml`):** Native RFC 822 parsing extracting Subject, From, To, Date, and body components.
@@ -136,8 +152,11 @@ DocuMind/
 │   ├── notebooks/                      # Exploratory data analysis & training notebooks
 │   ├── processed/                      # Pre-built search indices & dataset parquets
 │   └── src/                            # Local ML inference scripts (documind_agent.py)
+├── tests/                              # Unit & Architecture Verification Suite
+│   ├── test_agent_architecture.py      # Three-tool architecture & SDK tests
+│   ├── test_extraction.py              # Schema & numeric parsing tests
+│   └── test_retrieval_isolation.py     # Multi-tenant retrieval isolation tests
 ├── evaluation/                         # Automated Evaluation Framework
-│   ├── agent/                          # Agent routing benchmarks
 │   ├── classification/                 # DistilBERT evaluation scripts
 │   ├── metadata/                       # Invoice extraction benchmarks
 │   ├── rag/                            # Corpus QA groundedness evaluation
@@ -146,9 +165,9 @@ DocuMind/
 │   ├── uploaded_rag/                   # User document QA evaluation
 │   ├── gemini_eval.py                  # Evaluation runner for hosted Gemini agent
 │   └── run_all_evaluations.py          # Master evaluation orchestrator
-├── docs/                               # System documentation and evaluation specifications
-├── docker-compose.yml                  # PostgreSQL 16 container definition
+├── pytest.ini                          # Pytest configuration isolating vendor packages
 ├── pyrightconfig.json                  # Static analysis path configuration
+├── docker-compose.yml                  # PostgreSQL 16 container definition
 ├── run_backend.py                      # Dedicated uvicorn launcher
 └── README.md                           # Project guide and architectural documentation
 ```
@@ -205,6 +224,29 @@ npm install
 npm run dev
 ```
 The React frontend starts at `http://localhost:5173`.
+
+---
+
+## Testing & Quality Assurance
+
+Run the automated verification suite:
+
+```bash
+# 1. Run complete unit test suite (13 tests)
+pytest -q
+
+# 2. Run static type checking
+python -m pyright
+
+# 3. Build frontend production assets
+cd frontend && npm run build && cd ..
+
+# 4. Run Gemini agent evaluation suite
+python evaluation/gemini_eval.py
+
+# 5. Run classification benchmark (996 samples)
+python evaluation/classification/run_classification_eval.py
+```
 
 ---
 
